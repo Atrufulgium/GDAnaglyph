@@ -93,6 +93,9 @@ UNITY_AUDIODSP_RESULT AnaglyphBridge::Release(UnityAudioEffectState* state) {
 }
 
 UNITY_AUDIODSP_RESULT AnaglyphBridge::Reset(UnityAudioEffectState* state) {
+	if (anaglyph_definition == nullptr) {
+		return UNITY_AUDIODSP_ERR_UNSUPPORTED;
+	}
 	return anaglyph_definition->reset(state);
 }
 
@@ -103,7 +106,7 @@ UNITY_AUDIODSP_RESULT AnaglyphBridge::Process(UnityAudioEffectState* state, cons
 		for (int i = 0; i < length; i++) {
 			outbuffer[i] = inbuffer[i];
 		}
-		return UNITY_AUDIODSP_OK;
+		return UNITY_AUDIODSP_ERR_UNSUPPORTED;
 	}
 
 	// The layout of audio in Unity is as follows:
@@ -150,15 +153,29 @@ UNITY_AUDIODSP_RESULT AnaglyphBridge::Process(UnityAudioEffectState* state, cons
 }
 
 UNITY_AUDIODSP_RESULT AnaglyphBridge::SetParam(UnityAudioEffectState* state, int index, float value) {
-	godot::UtilityFunctions::print("Setting ", index, " to ", value);
+	if (anaglyph_definition == nullptr) {
+		return UNITY_AUDIODSP_ERR_UNSUPPORTED;
+	}
+	value = CLAMP(value, 0, 1);
 	return anaglyph_definition->setfloatparameter(state, index, value);
 }	
 
 UNITY_AUDIODSP_RESULT AnaglyphBridge::GetParam(UnityAudioEffectState* state, int index, float* value)  {
-	godot::UtilityFunctions::print("Getting ", index);
+	if (anaglyph_definition == nullptr) {
+		return UNITY_AUDIODSP_ERR_UNSUPPORTED;
+	}
 	// It seems to be the case NativeAudio SDK devs are expected to handle
 	// either outputs being null. Nice.
+	// TODO: Godot calls the getter periodically. If this lags (idk why the
+	// Unity version of the plugin lags, maybe something similar), keep track
+	// of Anaglyph's data locally, and only do sets. (Except for resets.)
 	return anaglyph_definition->getfloatparameter(state, index, value, nullptr);
+}
+
+float AnaglyphBridge::GetParamDirect(UnityAudioEffectState* state, int index) {
+	float value = 0;
+	GetParam(state, index, &value);
+	return value;
 }
 
 UNITY_AUDIODSP_RESULT AnaglyphBridge::SetParamScaled(UnityAudioEffectState* state, int index, float value, float min, float max) {
@@ -169,4 +186,37 @@ UNITY_AUDIODSP_RESULT AnaglyphBridge::GetParamScaled(UnityAudioEffectState* stat
 	UNITY_AUDIODSP_RESULT res = GetParam(state, index, value);
 	*value = *value * (max - min) + min;
 	return res;
+}
+
+float AnaglyphBridge::GetParamScaledDirect(UnityAudioEffectState* state, int index, float min, float max) {
+	float value = 0;
+	GetParamScaled(state, index, &value, min, max);
+	return value;
+}
+
+UNITY_AUDIODSP_RESULT AnaglyphBridge::SetParamBool(UnityAudioEffectState* state, int index, bool value) {
+	if (value) {
+		return SetParam(state, index, 1);
+	}
+	else {
+		return SetParam(state, index, 0);
+	}
+}
+
+UNITY_AUDIODSP_RESULT AnaglyphBridge::GetParamBool(UnityAudioEffectState* state, int index, bool* value) {
+	float float_value = 0;
+	UNITY_AUDIODSP_RESULT res = GetParam(state, index, &float_value);
+	if (float_value == 0) {
+		*value = false;
+	}
+	else {
+		*value = true;
+	}
+	return res;
+}
+
+bool AnaglyphBridge::GetParamBoolDirect(UnityAudioEffectState* state, int index) {
+	bool value = false;
+	GetParamBool(state, index, &value);
+	return value;
 }

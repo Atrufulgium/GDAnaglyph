@@ -69,12 +69,26 @@ namespace godot {
 		// Get a float param value, as determined by its index.
 		static UNITY_AUDIODSP_RESULT GetParam(UnityAudioEffectState* state, int index, float* value);
 		
+		// Returns a float param value directly, ignoring errors.
+		static float GetParamDirect(UnityAudioEffectState* state, int index);
+		
 		// Set a float param that lives on [min,max] by its index.
 		static UNITY_AUDIODSP_RESULT SetParamScaled(UnityAudioEffectState* state, int index, float value, float min, float max);
 		
 		// Get a float param that lives on [min,max] by its index.
 		static UNITY_AUDIODSP_RESULT GetParamScaled(UnityAudioEffectState* state, int index, float* value, float min, float max);
 
+		// Returns a scaled float param value directly, ignoring errors.
+		static float GetParamScaledDirect(UnityAudioEffectState* state, int index, float min, float max);
+
+		// Set a boolean param, as determined by its index.
+		static UNITY_AUDIODSP_RESULT SetParamBool(UnityAudioEffectState* state, int index, bool value);
+
+		// Get a boolean param value, as determined by its index.
+		static UNITY_AUDIODSP_RESULT GetParamBool(UnityAudioEffectState* state, int index, bool* value);
+
+		// Returns a bool param value directly, ignoring errors.
+		static bool GetParamBoolDirect(UnityAudioEffectState* state, int index);
 	};
 }
 
