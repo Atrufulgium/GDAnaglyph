@@ -149,10 +149,10 @@ float GDAnaglyph::get_attenuation_exponent() {
 }
 
 void GDAnaglyph::set_bypass_attenuation(const bool value) {
-	AnaglyphBridge::SetParamBool(&state, 0, value);
+	AnaglyphBridge::SetParamBool(&state, 3, value);
 }
 bool GDAnaglyph::get_bypass_attenuation() {
-	return AnaglyphBridge::GetParamBoolDirect(&state, 0);
+	return AnaglyphBridge::GetParamBoolDirect(&state, 3);
 }
 
 void GDAnaglyph::set_room_id(const float value) {
@@ -204,7 +204,7 @@ float GDAnaglyph::get_elevation() {
 }
 
 void GDAnaglyph::set_azimuth(const float value) {
-	AnaglyphBridge::SetParamScaled(&state, 27, value, -90, 90);
+	AnaglyphBridge::SetParamScaled(&state, 27, fmodf(value + 180, 360) - 180, -180, 180);
 }
 float GDAnaglyph::get_azimuth() {
 	return AnaglyphBridge::GetParamScaledDirect(&state, 27, -180, 180);
@@ -226,7 +226,7 @@ void GDAnaglyph::_bind_methods() {
 	ADD_GROUP("Binaural Personalisation", "");
 	REGISTER(FLOAT, hrtf_id, "id", PROPERTY_HINT_RANGE, "0,1");
 	REGISTER(BOOL, use_custom_circumference, "value", PROPERTY_HINT_NONE, "");
-	REGISTER(FLOAT, head_circumference, "cm", PROPERTY_HINT_RANGE, "20,80,1,suffix:cm");
+	REGISTER(FLOAT, head_circumference, "cm", PROPERTY_HINT_RANGE, "20,80,0.1,suffix:cm");
 	REGISTER(FLOAT, responsiveness, "value", PROPERTY_HINT_RANGE, "0,1");
 	REGISTER(BOOL, bypass_binaural, "bypass", PROPERTY_HINT_NONE, "");
 
@@ -247,4 +247,9 @@ void GDAnaglyph::_bind_methods() {
 	REGISTER(FLOAT, reverb_gain, "dB", PROPERTY_HINT_RANGE, "-40,15,1,suffix:dB");
 	REGISTER(VECTOR3, reverb_EQ, "dB", PROPERTY_HINT_RANGE, "-40,15,1,suffix:dB");
 	REGISTER(BOOL, bypass_reverb, "bypass", PROPERTY_HINT_NONE, "");
+
+	ADD_GROUP("Position", "");
+	REGISTER(FLOAT, elevation, "angle", PROPERTY_HINT_RANGE, "-90,90,1,degrees");
+	REGISTER(FLOAT, azimuth, "angle", PROPERTY_HINT_RANGE, "-180,180,1,or_greater,or_less,degrees");
+	REGISTER(FLOAT, distance, "meters", PROPERTY_HINT_RANGE, "0.1,10,0.1,suffix:m");
 }

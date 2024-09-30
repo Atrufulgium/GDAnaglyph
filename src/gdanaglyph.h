@@ -144,15 +144,15 @@ namespace godot {
 		void set_bypass_reverb(const bool bypass);
 		bool get_bypass_reverb();
 
-		// ==============================
-		// === Don't expose in editor ===
-		// ==============================
+		// ================
+		// === Position ===
+		// ================
 		// Elevation, in degrees[-90,90]. 0 is "on the same plane".
-		void set_elevation(const float rotation);
+		void set_elevation(const float angle);
 		float get_elevation();
 
 		// Azimuth, in degrees[ -180,180]. 0 is "forward", 90 is "right".
-		void set_azimuth(const float rotation);
+		void set_azimuth(const float angle);
 		float get_azimuth();
 
 		// Distance, in meters [0.1,10].

@@ -1,5 +1,6 @@
 #include "gdanaglyph_bridge.h"
 
+#include <godot_cpp/classes/audio_server.hpp>
 #include <godot_cpp/core/error_macros.hpp>
 #include <godot_cpp/variant/variant.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -70,16 +71,20 @@ UNITY_AUDIODSP_RESULT AnaglyphBridge::Create(UnityAudioEffectState* state) {
 	if (anaglyph_definition == nullptr)
 		return UNITY_AUDIODSP_ERR_UNSUPPORTED;
 
-	// But! If structsize is nonzero, Anaglyph busywaits, somewhy...
-	// I assume the sample rate is 44.1kHz.
-	// TODO: Read the sample rate off from somewhere.
-	state->samplerate = 44100;
-	state->internal = malloc(sizeof(float) * buffer_translate_limit * 2);
+	// Godots sample rate can be either 44.1 or 48, take note.
+	state->structsize = sizeof(UnityAudioEffectState);
+	state->samplerate = AudioServer::get_singleton()->get_mix_rate();
+	state->flags = UnityAudioEffectStateFlags_IsPlaying;
+	state->internal = malloc(sizeof(float) * dsp_buffer_size * 2);
+	state->dspbuffersize = 512; // Is this exact, or is an upper bound sufficient? Does this need to be set on create, or on process?
+	state->hostapiversion = UNITY_AUDIO_PLUGIN_API_VERSION;
 
 	UNITY_AUDIODSP_RESULT res = anaglyph_definition->create(state);
 	if (res == UNITY_AUDIODSP_ERR_UNSUPPORTED) {
 		DisableAnaglyph("Internal Anaglyph error while initializing. Anaglyph has been disabled.");
 	}
+	Reset(state);
+
 	return res;
 }
 
@@ -96,7 +101,20 @@ UNITY_AUDIODSP_RESULT AnaglyphBridge::Reset(UnityAudioEffectState* state) {
 	if (anaglyph_definition == nullptr) {
 		return UNITY_AUDIODSP_ERR_UNSUPPORTED;
 	}
-	return anaglyph_definition->reset(state);
+	anaglyph_definition->reset(state);
+
+	// Set the params not exposed to their lifetime-constant values.
+	// (See gdanaglyph.h for he meaning of these magic numbers.)
+	SetParam(state, 0, 0);
+	SetParam(state, 2, 0);
+	SetParam(state, 7, 0);
+	SetParam(state, 10, 0);
+	SetParam(state, 11, 0);
+	SetParam(state, 12, 0);
+	SetParam(state, 14, 0);
+	SetParam(state, 17, 1);
+	SetParam(state, 29, 0);
+	return UNITY_AUDIODSP_OK;
 }
 
 UNITY_AUDIODSP_RESULT AnaglyphBridge::Process(UnityAudioEffectState* state, const AudioFrame* inbuffer, AudioFrame* outbuffer, unsigned int length) {
@@ -108,18 +126,19 @@ UNITY_AUDIODSP_RESULT AnaglyphBridge::Process(UnityAudioEffectState* state, cons
 		}
 		return UNITY_AUDIODSP_ERR_UNSUPPORTED;
 	}
-
 	// The layout of audio in Unity is as follows:
 	// L1 L2 L3 ... R1 R2 R3...
 	// The layout of audio in Godot is as follows:
 	// L1 R1 L2 R2 L3 R3 ...
 	// We need to do a translation pass.
 
-	// The fun path
-	int limit = AnaglyphBridge::buffer_translate_limit;
+	int limit = AnaglyphBridge::dsp_buffer_size;
 	if (length > limit) {
-		godot::UtilityFunctions::push_warning("Truncating Anaglyph effect (requested ", length, "samples, using ", limit, " samples)");
-		length = limit;
+		DisableAnaglyph("Expected a DSP buffer size of at most 4096, but got something larger. Disabling Anaglyph.");
+		for (int i = 0; i < length; i++) {
+			outbuffer[i] = inbuffer[i];
+		}
+		return UNITY_AUDIODSP_ERR_UNSUPPORTED;
 	}
 
 	// Use `outbuffer`'s memory to store the Anaglyph input.
@@ -127,12 +146,16 @@ UNITY_AUDIODSP_RESULT AnaglyphBridge::Process(UnityAudioEffectState* state, cons
 	// Finally convert this output into `outbuffer`.
 	float* anaglyph_in_l = (float*)outbuffer;
 	float* anaglyph_in_r = anaglyph_in_l + length;
+	float* anaglyph_out_l = (float*)state->internal;
+	float* anaglyph_out_r = anaglyph_out_l + length;
 	for (int i = 0; i < length; i++) {
 		anaglyph_in_l[i] = inbuffer[i].left;
 		anaglyph_in_r[i] = inbuffer[i].right;
 	}
 
-	UNITY_AUDIODSP_RESULT res = anaglyph_definition->process(state, anaglyph_in_l, (float*) state->internal, length, 2, 2);
+	state->dspbuffersize = length;
+	UNITY_AUDIODSP_RESULT res = anaglyph_definition->process(state, anaglyph_in_l, anaglyph_out_l, length, 2, 2);
+
 	if (res == UNITY_AUDIODSP_ERR_UNSUPPORTED) {
 		DisableAnaglyph("Something unexpected went wrong while running Anaglyph. Anaglyph has been disabled.");
 		for (int i = 0; i < length; i++) {
@@ -140,9 +163,7 @@ UNITY_AUDIODSP_RESULT AnaglyphBridge::Process(UnityAudioEffectState* state, cons
 		}
 		return res;
 	}
-	
-	float* anaglyph_out_l = (float*)state->internal;
-	float* anaglyph_out_r = anaglyph_out_l + length;
+
 	for (int i = 0; i < length; i++) {
 		AudioFrame frame;
 		frame.left = anaglyph_out_l[i];
