@@ -3,8 +3,6 @@
 // License copied from the `LICENSE` in the repo root.
 // Note: Many of the defines won't really do anything here, but I'm using the
 // file as-is.
-// Note II: I will be abusing UnityAudioEffectState.internal as a block of
-// memory to convert between Unity and Godot's representation of audiobuffers.
 
 // The MIT License (MIT)
 // 

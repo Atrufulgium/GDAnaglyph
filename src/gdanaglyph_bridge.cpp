@@ -13,6 +13,7 @@ using namespace godot;
 UnityAudioEffectDefinition* AnaglyphBridge::anaglyph_definition = nullptr;
 bool AnaglyphBridge::loading_failed = false;
 std::string AnaglyphBridge::dll_path = ".\\Anaglyph\\audioplugin_Anaglyph.dll";
+int AnaglyphBridge::computed_buffer_size = 0;
 
 typedef int(AUDIO_CALLING_CONVENTION* GetAudioEffectDefinitions)(UnityAudioEffectDefinition*** descptr);
 
@@ -31,6 +32,53 @@ UnityAudioEffectDefinition* AnaglyphBridge::GetEffectData() {
 	}
 	godot::UtilityFunctions::print("Finished processing Anaglyph dll!\nDll: ", def->name, " Version: ", def->pluginversion);
 	return def;
+}
+
+int AnaglyphBridge::get_dsp_buffer_size() {
+	if (computed_buffer_size != 0)
+		return computed_buffer_size;
+	// This number I want is *very clearly defined* in
+	// AudioDriver::get_input_size() (which you can get access to with a
+	// call to static AudioDriverManager::get_driver()).
+	// Except I can't. It's not exposed in godot-cpp, and only available
+	// to the engine itself...
+	// So, uhhhh...
+	// TODO: Make this work in a way not as crap-ass.
+	//      (I hope this is a genuine case of "I'm a moron".)
+
+	// The implementations that set the variable behind AudioDriver::get_input_size()
+	// for reference (this list is exhaustive as of gd4.3!):
+	// - https://github.com/godotengine/godot/blob/1917bc3454e58fc56750b00e04aa25cb94d8d266/platform/web/audio_driver_web.cpp#L194
+	//   Sets it to `closest_power_of_2(latency * mix_rate / 1000)`
+	// - https://github.com/godotengine/godot/blob/1917bc3454e58fc56750b00e04aa25cb94d8d266/platform/android/audio_driver_opensl.cpp#L259
+	//   Sets it to `2048`
+	// - https://github.com/godotengine/godot/blob/1917bc3454e58fc56750b00e04aa25cb94d8d266/drivers/coreaudio/audio_driver_coreaudio.cpp#L480
+	//   Sets it to `closest_power_of_2(latency * mix_rate / 1000)`
+	// - https://github.com/godotengine/godot/blob/1917bc3454e58fc56750b00e04aa25cb94d8d266/drivers/wasapi/audio_driver_wasapi.cpp#L515
+	//   Sets it to WASAPI's GetBufferSize
+	// - https://github.com/godotengine/godot/blob/1917bc3454e58fc56750b00e04aa25cb94d8d266/drivers/pulseaudio/audio_driver_pulseaudio.cpp#L745
+	//   Sets it to `closest_power_of_2(latency * mix_rate / 1000)`
+
+	// The WASPI option matches the three `latency * mix_rate` approaches in
+	// one (1) singular test, on my machine.
+	// So, I'm sorry, android, but imma do it the way the four others do it.
+
+	AudioServer* audio = AudioServer::get_singleton();
+	if (audio == nullptr) {
+		godot::UtilityFunctions::print("Can't even guess DSP buffer size reasonably smh i give up");
+		computed_buffer_size = 512;
+		return computed_buffer_size;
+	}
+
+	double latency = audio->get_output_latency();
+	double mix_rate = audio->get_mix_rate();
+	// (No `/ 1000` as our latency is `double` -- seconds, while the latency in
+	//  the references above is `int` -- milliseconds.)
+	computed_buffer_size = closest_power_of_2(latency * mix_rate);
+	if (computed_buffer_size == 0)  // This should *really* never happen, but...
+		computed_buffer_size = 512; // if it's 0 Anaglyph cries.
+	godot::UtilityFunctions::print("Guessed DSP buffer size ", computed_buffer_size, " (latency ", latency, "; rate ", mix_rate, ")");
+	return computed_buffer_size;
 }
 
 UnityAudioEffectDefinition* AnaglyphBridge::GetDataFromDLL() {
@@ -66,17 +114,20 @@ void AnaglyphBridge::DisableAnaglyph(std::string msg) {
 
 UNITY_AUDIODSP_RESULT AnaglyphBridge::Create(UnityAudioEffectState* state) {
 	GetEffectData(); // Just to ensure anaglyph is properly loaded.
-	// In Unity's examples, only the state's *effectdata was written to.
-	// It feels safe to assume the rest is input.
 	if (anaglyph_definition == nullptr)
 		return UNITY_AUDIODSP_ERR_UNSUPPORTED;
+
+	// In Unity's examples, only the state's *effectdata was written to.
+	// It feels safe to assume the rest is input.
+	// Anaglyph seems to use *very* little of this input data.
 
 	// Godots sample rate can be either 44.1 or 48, take note.
 	state->structsize = sizeof(UnityAudioEffectState);
 	state->samplerate = AudioServer::get_singleton()->get_mix_rate();
 	state->flags = UnityAudioEffectStateFlags_IsPlaying;
-	state->internal = malloc(sizeof(float) * dsp_buffer_size * 2);
-	state->dspbuffersize = 512; // Is this exact, or is an upper bound sufficient? Does this need to be set on create, or on process?
+	// Anaglyph does not use this data on process but only on create.
+	// Makes sense, but slightly annoying.
+	state->dspbuffersize = get_dsp_buffer_size();
 	state->hostapiversion = UNITY_AUDIO_PLUGIN_API_VERSION;
 
 	UNITY_AUDIODSP_RESULT res = anaglyph_definition->create(state);
@@ -89,7 +140,6 @@ UNITY_AUDIODSP_RESULT AnaglyphBridge::Create(UnityAudioEffectState* state) {
 }
 
 UNITY_AUDIODSP_RESULT AnaglyphBridge::Release(UnityAudioEffectState* state) {
-	free(state->internal);
 	if (anaglyph_definition == nullptr) {
 		return UNITY_AUDIODSP_ERR_UNSUPPORTED;
 	}
@@ -131,30 +181,21 @@ UNITY_AUDIODSP_RESULT AnaglyphBridge::Process(UnityAudioEffectState* state, cons
 	// The layout of audio in Godot is as follows:
 	// L1 R1 L2 R2 L3 R3 ...
 	// We need to do a translation pass.
+	// EDIT:
+	// ...or so you'd think.
+	// But this only sounds correct *without* the translation pass, which I
+	// really can't explain. Oh well.
 
-	int limit = AnaglyphBridge::dsp_buffer_size;
-	if (length > limit) {
-		DisableAnaglyph("Expected a DSP buffer size of at most 4096, but got something larger. Disabling Anaglyph.");
+	int limit = AnaglyphBridge::get_dsp_buffer_size();
+	if (length != limit) {
+		DisableAnaglyph("Anaglyph's dsp buffer size doesn't match godot's. Disabling Anaglyph.");
 		for (int i = 0; i < length; i++) {
 			outbuffer[i] = inbuffer[i];
 		}
 		return UNITY_AUDIODSP_ERR_UNSUPPORTED;
 	}
 
-	// Use `outbuffer`'s memory to store the Anaglyph input.
-	// Use `state->internal`'s memory to store the Anaglyph output.
-	// Finally convert this output into `outbuffer`.
-	float* anaglyph_in_l = (float*)outbuffer;
-	float* anaglyph_in_r = anaglyph_in_l + length;
-	float* anaglyph_out_l = (float*)state->internal;
-	float* anaglyph_out_r = anaglyph_out_l + length;
-	for (int i = 0; i < length; i++) {
-		anaglyph_in_l[i] = inbuffer[i].left;
-		anaglyph_in_r[i] = inbuffer[i].right;
-	}
-
-	state->dspbuffersize = length;
-	UNITY_AUDIODSP_RESULT res = anaglyph_definition->process(state, anaglyph_in_l, anaglyph_out_l, length, 2, 2);
+	UNITY_AUDIODSP_RESULT res = anaglyph_definition->process(state, (float*)inbuffer, (float*)outbuffer, length, 2, 2);
 
 	if (res == UNITY_AUDIODSP_ERR_UNSUPPORTED) {
 		DisableAnaglyph("Something unexpected went wrong while running Anaglyph. Anaglyph has been disabled.");
@@ -162,13 +203,6 @@ UNITY_AUDIODSP_RESULT AnaglyphBridge::Process(UnityAudioEffectState* state, cons
 			outbuffer[i] = inbuffer[i];
 		}
 		return res;
-	}
-
-	for (int i = 0; i < length; i++) {
-		AudioFrame frame;
-		frame.left = anaglyph_out_l[i];
-		frame.right = anaglyph_out_r[i];
-		outbuffer[i] = frame;
 	}
 	return res;
 }

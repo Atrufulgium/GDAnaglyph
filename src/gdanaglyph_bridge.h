@@ -32,15 +32,12 @@ namespace godot {
 		//     '- all .sofa files
 		static std::string dll_path;
 
-		// Unfortunately Godot and Unity disagree on buffer layout.
-		// Transposing the buffer in place is very messy, so I need temporary
-		// helper buffers. This is the size limit for each channel.
-		// Very awkward, but I can't seem to grab the buffer size from
-		// `driver_buffer_frames` in AudioDriver::input_buffer_init.
-		// It generally looks like `closest_power_of_2((latency * mix_rate / 1000));`
-		// so just grab a large-ish number.
-		// Wasting 30kB memory per instance isn't all that bad.
-		static const int dsp_buffer_size = 4096;
+		// Anaglyph uses some internal buffers, whose size needs to match the
+		// size of the input/output buffers.
+		// This method gets those.
+		static int get_dsp_buffer_size();
+		// (To not recalculate the above every single time.)
+		static int computed_buffer_size;
 		
 		// The workhorse of GetEffectData();
 		static UnityAudioEffectDefinition* GetDataFromDLL();

@@ -220,8 +220,8 @@ float GDAnaglyph::get_distance() {
 void GDAnaglyph::_bind_methods() {
 	// (See https://docs.godotengine.org/en/latest/classes/class_%40globalscope.html#enum-globalscope-propertyhint
 	//  for how the hint string works.)
-	REGISTER(FLOAT, wet, "percentage", PROPERTY_HINT_RANGE, "0,100,1,suffix:%");
-	REGISTER(FLOAT, gain, "dB", PROPERTY_HINT_RANGE, "-40,15,1,suffix:dB");
+	REGISTER(FLOAT, wet, "percentage", PROPERTY_HINT_RANGE, "0,100,0.1,suffix:%");
+	REGISTER(FLOAT, gain, "dB", PROPERTY_HINT_RANGE, "-40,15,0.1,suffix:dB");
 
 	ADD_GROUP("Binaural Personalisation", "");
 	REGISTER(FLOAT, hrtf_id, "id", PROPERTY_HINT_RANGE, "0,1");
@@ -244,12 +244,12 @@ void GDAnaglyph::_bind_methods() {
 	ADD_GROUP("Reverb", "");
 	REGISTER(FLOAT, room_id, "id", PROPERTY_HINT_RANGE, "0,1");
 	REGISTER(INT, reverb_type, "type", PROPERTY_HINT_ENUM, "OMNI:0,2D:1,3D 1st:2, 3D 2nd:3");
-	REGISTER(FLOAT, reverb_gain, "dB", PROPERTY_HINT_RANGE, "-40,15,1,suffix:dB");
-	REGISTER(VECTOR3, reverb_EQ, "dB", PROPERTY_HINT_RANGE, "-40,15,1,suffix:dB");
+	REGISTER(FLOAT, reverb_gain, "dB", PROPERTY_HINT_RANGE, "-40,15,0.1,suffix:dB");
+	REGISTER(VECTOR3, reverb_EQ, "dB", PROPERTY_HINT_RANGE, "-40,15,0.1,suffix:dB");
 	REGISTER(BOOL, bypass_reverb, "bypass", PROPERTY_HINT_NONE, "");
 
 	ADD_GROUP("Position", "");
-	REGISTER(FLOAT, elevation, "angle", PROPERTY_HINT_RANGE, "-90,90,1,degrees");
-	REGISTER(FLOAT, azimuth, "angle", PROPERTY_HINT_RANGE, "-180,180,1,or_greater,or_less,degrees");
+	REGISTER(FLOAT, elevation, "angle", PROPERTY_HINT_RANGE, "-90,90,0.1,degrees");
+	REGISTER(FLOAT, azimuth, "angle", PROPERTY_HINT_RANGE, "-180,180,0.1,or_greater,or_less,degrees");
 	REGISTER(FLOAT, distance, "meters", PROPERTY_HINT_RANGE, "0.1,10,0.1,suffix:m");
 }
