@@ -2,6 +2,7 @@
 #define GDANAGLYPH
 
 #include "AudioPluginInterface.h"
+#include "register_macro.h"
 
 #include <godot_cpp/classes/audio_effect.hpp>
 #include <godot_cpp/classes/audio_effect_instance.hpp>
@@ -171,17 +172,5 @@ namespace godot {
 		// 29 - Zoom				  - VST camera property, irrelevant.
 	};
 }
-
-// Abuse how "adjacent " "strings" get concatenated.
-
-#define STRINGIFY(text) #text
-
-// This registration is so much typing, I hate it.
-// To register e.g. `set_distance(const float arg)`, you need to do:
-// REGISTER(FLOAT, distance, "arg", "godot_name", PROPERTY_HINT_RANGE, "0.1,10,0.1,suffix:m")
-#define REGISTER(type, prop, cppparam, hint_type, hint_str) \
-	ClassDB::bind_method(D_METHOD("get_" STRINGIFY(prop)), &GDAnaglyph::get_##prop); \
-	ClassDB::bind_method(D_METHOD("set_" STRINGIFY(prop), cppparam), &GDAnaglyph::set_##prop); \
-	ADD_PROPERTY(PropertyInfo(Variant::##type, STRINGIFY(prop), hint_type, hint_str), "set_" STRINGIFY(prop), "get_" STRINGIFY(prop));
 
 #endif //GDANAGLYPH

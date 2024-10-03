@@ -1,3 +1,4 @@
+#include "audio_stream_player_anaglyph.h"
 #include "gdanaglyph.h"
 #include "gdanaglyph_bridge.h"
 #include "register_types.h"
@@ -13,6 +14,7 @@ void initialize_gdanaglyph_module(ModuleInitializationLevel p_level) {
 		return;
 	}
 
+	GDREGISTER_CLASS(AudioStreamPlayerAnaglyph);
 	GDREGISTER_CLASS(GDAnaglyph);
 	GDREGISTER_CLASS(GDAnaglyphInstance);
 

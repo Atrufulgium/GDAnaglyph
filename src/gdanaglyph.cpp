@@ -220,36 +220,36 @@ float GDAnaglyph::get_distance() {
 void GDAnaglyph::_bind_methods() {
 	// (See https://docs.godotengine.org/en/latest/classes/class_%40globalscope.html#enum-globalscope-propertyhint
 	//  for how the hint string works.)
-	REGISTER(FLOAT, wet, "percentage", PROPERTY_HINT_RANGE, "0,100,0.1,suffix:%");
-	REGISTER(FLOAT, gain, "dB", PROPERTY_HINT_RANGE, "-40,15,0.1,suffix:dB");
+	REGISTER(FLOAT, wet, GDAnaglyph, "percentage", PROPERTY_HINT_RANGE, "0,100,0.1,suffix:%");
+	REGISTER(FLOAT, gain, GDAnaglyph, "dB", PROPERTY_HINT_RANGE, "-40,15,0.1,suffix:dB");
 
 	ADD_GROUP("Binaural Personalisation", "");
-	REGISTER(FLOAT, hrtf_id, "id", PROPERTY_HINT_RANGE, "0,1");
-	REGISTER(BOOL, use_custom_circumference, "value", PROPERTY_HINT_NONE, "");
-	REGISTER(FLOAT, head_circumference, "cm", PROPERTY_HINT_RANGE, "20,80,0.1,suffix:cm");
-	REGISTER(FLOAT, responsiveness, "value", PROPERTY_HINT_RANGE, "0,1");
-	REGISTER(BOOL, bypass_binaural, "bypass", PROPERTY_HINT_NONE, "");
+	REGISTER(FLOAT, hrtf_id, GDAnaglyph, "id", PROPERTY_HINT_RANGE, "0,1");
+	REGISTER(BOOL, use_custom_circumference, GDAnaglyph, "value", PROPERTY_HINT_NONE, "");
+	REGISTER(FLOAT, head_circumference, GDAnaglyph, "cm", PROPERTY_HINT_RANGE, "20,80,0.1,suffix:cm");
+	REGISTER(FLOAT, responsiveness, GDAnaglyph, "value", PROPERTY_HINT_RANGE, "0,1");
+	REGISTER(BOOL, bypass_binaural, GDAnaglyph, "bypass", PROPERTY_HINT_NONE, "");
 
 	ADD_GROUP("Localisation", "");
-	REGISTER(BOOL, bypass_parallax, "bypass", PROPERTY_HINT_NONE, "");
-	REGISTER(BOOL, bypass_shadow, "bypass", PROPERTY_HINT_NONE, "");
-	REGISTER(BOOL, bypass_micro_oscillations, "bypass", PROPERTY_HINT_NONE, "");
+	REGISTER(BOOL, bypass_parallax, GDAnaglyph, "bypass", PROPERTY_HINT_NONE, "");
+	REGISTER(BOOL, bypass_shadow, GDAnaglyph, "bypass", PROPERTY_HINT_NONE, "");
+	REGISTER(BOOL, bypass_micro_oscillations, GDAnaglyph, "bypass", PROPERTY_HINT_NONE, "");
 
 	ADD_GROUP("Attenuation", "");
-	REGISTER(FLOAT, min_attenuation, "meters", PROPERTY_HINT_RANGE, "0.1,10,0.1,suffix:m");
-	REGISTER(FLOAT, max_attenuation, "meters", PROPERTY_HINT_RANGE, "0.1,10,0.1,suffix:m");
-	REGISTER(FLOAT, attenuation_exponent, "exponent", PROPERTY_HINT_RANGE, "0,2,0.1");
-	REGISTER(BOOL, bypass_attenuation, "bypass", PROPERTY_HINT_NONE, "");
+	REGISTER(FLOAT, min_attenuation, GDAnaglyph, "meters", PROPERTY_HINT_RANGE, "0.1,10,0.1,suffix:m");
+	REGISTER(FLOAT, max_attenuation, GDAnaglyph, "meters", PROPERTY_HINT_RANGE, "0.1,10,0.1,suffix:m");
+	REGISTER(FLOAT, attenuation_exponent, GDAnaglyph, "exponent", PROPERTY_HINT_RANGE, "0,2,0.1");
+	REGISTER(BOOL, bypass_attenuation, GDAnaglyph, "bypass", PROPERTY_HINT_NONE, "");
 
 	ADD_GROUP("Reverb", "");
-	REGISTER(FLOAT, room_id, "id", PROPERTY_HINT_RANGE, "0,1");
-	REGISTER(INT, reverb_type, "type", PROPERTY_HINT_ENUM, "OMNI:0,2D:1,3D 1st:2, 3D 2nd:3");
-	REGISTER(FLOAT, reverb_gain, "dB", PROPERTY_HINT_RANGE, "-40,15,0.1,suffix:dB");
-	REGISTER(VECTOR3, reverb_EQ, "dB", PROPERTY_HINT_RANGE, "-40,15,0.1,suffix:dB");
-	REGISTER(BOOL, bypass_reverb, "bypass", PROPERTY_HINT_NONE, "");
+	REGISTER(FLOAT, room_id, GDAnaglyph, "id", PROPERTY_HINT_RANGE, "0,1");
+	REGISTER(INT, reverb_type, GDAnaglyph, "type", PROPERTY_HINT_ENUM, "OMNI:0,2D:1,3D 1st:2, 3D 2nd:3");
+	REGISTER(FLOAT, reverb_gain, GDAnaglyph, "dB", PROPERTY_HINT_RANGE, "-40,15,0.1,suffix:dB");
+	REGISTER(VECTOR3, reverb_EQ, GDAnaglyph, "dB", PROPERTY_HINT_RANGE, "-40,15,0.1,suffix:dB");
+	REGISTER(BOOL, bypass_reverb, GDAnaglyph, "bypass", PROPERTY_HINT_NONE, "");
 
 	ADD_GROUP("Position", "");
-	REGISTER(FLOAT, elevation, "angle", PROPERTY_HINT_RANGE, "-90,90,0.1,degrees");
-	REGISTER(FLOAT, azimuth, "angle", PROPERTY_HINT_RANGE, "-180,180,0.1,or_greater,or_less,degrees");
-	REGISTER(FLOAT, distance, "meters", PROPERTY_HINT_RANGE, "0.1,10,0.1,suffix:m");
+	REGISTER(FLOAT, elevation, GDAnaglyph, "angle", PROPERTY_HINT_RANGE, "-90,90,0.1,degrees");
+	REGISTER(FLOAT, azimuth, GDAnaglyph, "angle", PROPERTY_HINT_RANGE, "-180,180,0.1,or_greater,or_less,degrees");
+	REGISTER(FLOAT, distance, GDAnaglyph, "meters", PROPERTY_HINT_RANGE, "0.1,10,0.1,suffix:m");
 }
