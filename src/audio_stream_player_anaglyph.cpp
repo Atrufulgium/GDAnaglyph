@@ -1,11 +1,18 @@
 #include "audio_stream_player_anaglyph.h"
+#include "anaglyph_bus_manager.h"
+#include "gdanaglyph_bridge.h"
 
+#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 using namespace godot;
 
+bool AudioStreamPlayerAnaglyph::anaglyph_enabled = true;
+
 AudioStreamPlayerAnaglyph::AudioStreamPlayerAnaglyph() {
+	runtime_players = Players{};
+
 	// DON'T instantiate Ref<Resource> and let the engine do the work.
 	// (See https://github.com/godotengine/godot/blob/1917bc3454e58fc56750b00e04aa25cb94d8d266/core/object/class_db.cpp#L2176 )
 	//anaglyph_state.instantiate();
@@ -26,7 +33,7 @@ bool AudioStreamPlayerAnaglyph::get_players(AudioStreamPlayerAnaglyph::Players& 
 		return false;
 	}
 	else {
-		players.anaglyph_input = nullptr;
+		players.anaglyph = nullptr;
 		players.fallback = nullptr;
 
 		for (int i = 0; i < 2; i++) {
@@ -34,13 +41,13 @@ bool AudioStreamPlayerAnaglyph::get_players(AudioStreamPlayerAnaglyph::Players& 
 			AudioStreamPlayer* a = Object::cast_to<AudioStreamPlayer>(child);
 			AudioStreamPlayer3D* b = Object::cast_to<AudioStreamPlayer3D>(child);
 			if (a != nullptr) {
-				players.anaglyph_input = a;
+				players.anaglyph = a;
 			}
 			else if (b != nullptr) {
 				players.fallback = b;
 			}
 		}
-		return players.anaglyph_input != nullptr
+		return players.anaglyph != nullptr
 			&& players.fallback != nullptr;
 	}
 }
@@ -74,6 +81,65 @@ void AudioStreamPlayerAnaglyph::_enter_tree() {
 	}
 }
 
+void AudioStreamPlayerAnaglyph::_ready() {
+	// Only run when playing.
+	if (Engine::get_singleton()->is_editor_hint()) {
+		return;
+	}
+
+	if (!get_players(runtime_players)) {
+		runtime_players = Players{};
+		godot::UtilityFunctions::push_warning("Malformed tree structure in AudioStreamPlayerAnaglyph.\nIt has been disabled, please fix it in the editor.\n(It requires two children, an AudioStreamPlayer for Anaglyph, and a fallback AudioStreamPlayer3D.)");
+		get_parent()->remove_child(this);
+	}
+	user_bus = bus;
+}
+
+void AudioStreamPlayerAnaglyph::_process(double delta) {
+	// Only run when playing.
+	if (Engine::get_singleton()->is_editor_hint()) {
+		return;
+	}
+
+	// If the tree is not setup properly, don't do anything.
+	Players players = Players{};
+	if (!get_players(players)) {
+		return;
+	}
+
+	// Decide whether to process Anaglyph or the fallback.
+	// Switching between Anaglyph and the fallback should be as smooth as
+	// possible as it can happen at any time for a variety of reasons.
+	// Priority: global override > local override > default behaviour.
+	bool use_anaglyph = true;
+	// TODO: Take `max_anaglyph_range` into account
+	if (forcing == FORCE_ANAGLYPH_ON) {
+		use_anaglyph = true;
+	}
+	else if (forcing == FORCE_ANAGLYPH_OFF) {
+		use_anaglyph = false;
+	}
+	if (!get_anaglyph_enabled()) {
+		use_anaglyph = false;
+	}
+
+	// To ensure both are synced in playback, we don't remove the node from the
+	// tree or anything, we just send the inactive node's audio to a muted bus.
+	// TODO: Work with signals ffs
+	// TODO: Use a proper lending system instead of just having one anaglyph bus.
+	StringName anaglyph_bus = AnaglyphBusManager::get_singleton()->get_anaglyph_bus(user_bus);
+	StringName silent_bus = AnaglyphBusManager::get_singleton()->get_silent_bus();
+	if (use_anaglyph) {
+		// TODO: Add and set GDAnaglyph properties
+		runtime_players.anaglyph->set_bus(anaglyph_bus);
+		runtime_players.fallback->set_bus(silent_bus);
+	}
+	else {
+		runtime_players.anaglyph->set_bus(silent_bus);
+		runtime_players.fallback->set_bus(user_bus);
+	}
+}
+
 void AudioStreamPlayerAnaglyph::copy_shared_properties() const {
 	Players players = Players{};
 	// Don't do anything if the setup is incorrect.
@@ -81,15 +147,17 @@ void AudioStreamPlayerAnaglyph::copy_shared_properties() const {
 		return;
 	}
 
-	players.anaglyph_input->set_stream(audio_stream);
-	players.anaglyph_input->set_volume_db(volume);
-	players.anaglyph_input->set_pitch_scale(pitch_scale);
-	players.anaglyph_input->set_bus(bus);
-	players.anaglyph_input->set_playback_type(playback_type);
+	players.anaglyph->set_stream(audio_stream);
+	players.anaglyph->set_volume_db(volume);
+	players.anaglyph->set_pitch_scale(pitch_scale);
+	players.anaglyph->set_autoplay(autoplay);
+	players.anaglyph->set_bus(bus);
+	players.anaglyph->set_playback_type(playback_type);
 
 	players.fallback->set_stream(audio_stream);
 	players.fallback->set_volume_db(volume);
 	players.fallback->set_pitch_scale(pitch_scale);
+	players.fallback->set_autoplay(autoplay);
 	players.fallback->set_bus(bus);
 	players.fallback->set_playback_type(playback_type);
 }
@@ -153,6 +221,15 @@ float AudioStreamPlayerAnaglyph::get_max_anaglyph_range() const {
 	return max_anaglyph_range;
 }
 
+void AudioStreamPlayerAnaglyph::set_autoplay(bool p_autoplay) {
+	autoplay = p_autoplay;
+	copy_shared_properties();
+}
+
+bool AudioStreamPlayerAnaglyph::get_autoplay() const {
+	return autoplay;
+}
+
 void AudioStreamPlayerAnaglyph::set_forcing(ForceStream p_forcing) {
 	forcing = p_forcing;
 }
@@ -170,11 +247,22 @@ Ref<GDAnaglyph> AudioStreamPlayerAnaglyph::get_anaglyph_state() const {
 	return anaglyph_state;
 }
 
+void AudioStreamPlayerAnaglyph::set_anaglyph_enabled(bool enabled) {
+	anaglyph_enabled = enabled;
+}
+
+bool AudioStreamPlayerAnaglyph::get_anaglyph_enabled() {
+	if (AnaglyphBridge::GetEffectData() == nullptr)
+		return false;
+	return anaglyph_enabled;
+}
+
 void AudioStreamPlayerAnaglyph::_bind_methods() {
 	ADD_GROUP("Shared stream settings", "");
 	REGISTER(OBJECT, stream, AudioStreamPlayerAnaglyph, "stream", PROPERTY_HINT_RESOURCE_TYPE, "AudioStream");
 	REGISTER(FLOAT, volume_db, AudioStreamPlayerAnaglyph, "volume_db", PROPERTY_HINT_RANGE, "-80,24,suffix:dB");
 	REGISTER(FLOAT, pitch_scale, AudioStreamPlayerAnaglyph, "pitch_scale", PROPERTY_HINT_RANGE, "0.01,4,0.01,or_greater");
+	REGISTER(BOOL, autoplay, AudioStreamPlayerAnaglyph, "autoplay", PROPERTY_HINT_NONE, "");
 	// This one's hint string is filled by validate_property
 	REGISTER(STRING_NAME, bus, AudioStreamPlayerAnaglyph, "bus", PROPERTY_HINT_ENUM, "");
 	REGISTER(INT, playback_type, AudioStreamPlayerAnaglyph, "playback_type", PROPERTY_HINT_ENUM, "Default,Stream,Sample");
@@ -187,6 +275,9 @@ void AudioStreamPlayerAnaglyph::_bind_methods() {
 	BIND_ENUM_CONSTANT(FORCE_NONE);
 	BIND_ENUM_CONSTANT(FORCE_ANAGLYPH_ON);
 	BIND_ENUM_CONSTANT(FORCE_ANAGLYPH_OFF);
+
+	ClassDB::bind_static_method("AudioStreamPlayerAnaglyph", D_METHOD("get_anaglyph_enabled"), AudioStreamPlayerAnaglyph::get_anaglyph_enabled);
+	ClassDB::bind_static_method("AudioStreamPlayerAnaglyph", D_METHOD("set_anaglyph_enabled", "anaglyph_enabled"), AudioStreamPlayerAnaglyph::set_anaglyph_enabled);
 }
 
 void AudioStreamPlayerAnaglyph::_validate_property(PropertyInfo& p_property) const {

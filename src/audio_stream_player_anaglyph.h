@@ -24,19 +24,27 @@ namespace godot {
 
 	private:
 		struct Players {
-			// The player to use on the fun path with Anaglyph.
-			AudioStreamPlayer* anaglyph_input;
+			// The player to use when Anaglyph is enabled.
+			AudioStreamPlayer* anaglyph;
 			// The player to use in case Anaglyph fails.
 			AudioStreamPlayer3D* fallback;
 		};
 
 		// I require a single child that is an AudioStreamPlayer.
 		// This method either gets it, or returns nullptr on a malformed tree.
+		// In the editor, you repeatedly need to do this check to inform the
+		// end-user whether everything's correct.
+		// In runtime, it ought to be correct, and then the children are stored.
 		bool get_players(Players& players) const;
+		Players runtime_players;
+		// We overwrite the buses of the children during runtime. The initial
+		// bus the user chose during the editor will be stored here.
+		StringName user_bus;
 
 		Ref<AudioStream> audio_stream;
 		float volume;
 		float pitch_scale;
+		bool autoplay;
 		int max_polyphony;
 		StringName bus;
 		AudioServer::PlaybackType playback_type;
@@ -44,6 +52,8 @@ namespace godot {
 		float max_anaglyph_range;
 		ForceStream forcing;
 		Ref<GDAnaglyph> anaglyph_state;
+
+		static bool anaglyph_enabled;
 
 	protected:
 		static void _bind_methods();
@@ -58,11 +68,12 @@ namespace godot {
 		AudioStreamPlayerAnaglyph();
 		~AudioStreamPlayerAnaglyph();
 
-		virtual PackedStringArray _get_configuration_warnings() const override;
-		virtual void _enter_tree() override;
+		PackedStringArray _get_configuration_warnings() const override;
+		void _enter_tree() override;
+		void _ready() override;
+		void _process(double delta) override;
 
 		// TODO: Methods for playback
-		// TODO: Global anaglyph "off" button
 
 		// Shared properties
 		void set_stream(Ref<AudioStream> audio_stream);
@@ -73,6 +84,9 @@ namespace godot {
 
 		void set_pitch_scale(float pitch_scale);
 		float get_pitch_scale() const;
+
+		void set_autoplay(bool autoplay);
+		bool get_autoplay() const;
 
 		void set_bus(const StringName& bus);
 		StringName get_bus() const;
@@ -89,6 +103,12 @@ namespace godot {
 
 		void set_anaglyph_state(Ref<GDAnaglyph> anaglyph_state);
 		Ref<GDAnaglyph> get_anaglyph_state() const;
+
+		// Only does something if the dll is loaded properly.
+		// Otherwise, anaglyph is force-disabled and this automatically
+		// returns `false`, at least until enabled again.
+		static void set_anaglyph_enabled(bool enabled);
+		static bool get_anaglyph_enabled();
 	};
 }
 
