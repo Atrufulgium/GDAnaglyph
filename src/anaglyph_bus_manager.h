@@ -1,6 +1,8 @@
 #ifndef GDANAGLYPH_BUSES
 #define GDANAGLYPH_BUSES
 
+#include "gdanaglyph.h"
+
 #include <godot_cpp/classes/audio_server.hpp>
 
 namespace godot {
@@ -40,7 +42,7 @@ namespace godot {
 		// Tries to get a free anaglyph'd bus, which gets its output rerouted
 		// into the base bus.
 		// If there is no free bus, directly returns the base bus.
-		StringName get_anaglyph_bus(StringName base_bus);
+		StringName get_anaglyph_bus(StringName base_bus, Ref<GDAnaglyph> anaglyph_data);
 		// Gets a muted bus.
 		StringName get_silent_bus();
 	};

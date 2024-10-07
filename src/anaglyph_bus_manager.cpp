@@ -82,10 +82,19 @@ AnaglyphBusManager::~AnaglyphBusManager() {
 	// I mean, it's a singleton, I don't have to care anyways.
 }
 
-StringName AnaglyphBusManager::get_anaglyph_bus(StringName base_bus) {
+StringName AnaglyphBusManager::get_anaglyph_bus(StringName base_bus, Ref<GDAnaglyph> anaglyph_data) {
 	// Some fancy lending logic here at some point that also uses anaglyph_buses
 	StringName name = StringName(a_bus_name);
 	int index = guarantee_bus(name);
+
+	// Set the anaglyph data.
+	if (audio->get_bus_effect_count(index) == 0) {
+		audio->add_bus_effect(index, anaglyph_data);
+	}
+	else {
+		// I'll never agree to overloaded `=` operators...
+		audio->get_bus_effect(index, 0) = anaglyph_data;
+	}
 
 	// Reroute it into the base bus
 	audio->set_bus_send(index, base_bus);

@@ -7,6 +7,7 @@
 #include <godot_cpp/classes/audio_effect.hpp>
 #include <godot_cpp/classes/audio_effect_instance.hpp>
 #include <godot_cpp/classes/audio_frame.hpp>
+#include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/variant/vector3.hpp>
 
 namespace godot {
@@ -50,6 +51,10 @@ namespace godot {
 		~GDAnaglyph();
 
 		virtual Ref<AudioEffectInstance> _instantiate() override;
+
+		// Returns in the Vector3 the azimuth [x], elevation [y], and distance [z]
+		// so that their respective getters/setters can use them.
+		static Vector3 calculate_polar_position(Node3D* audio_source, Node3D* audio_listener);
 
 		// ======================
 		// === The usual ones ===
@@ -148,13 +153,13 @@ namespace godot {
 		// ================
 		// === Position ===
 		// ================
-		// Elevation, in degrees[-90,90]. 0 is "on the same plane".
-		void set_elevation(const float angle);
-		float get_elevation();
-
 		// Azimuth, in degrees[ -180,180]. 0 is "forward", 90 is "right".
 		void set_azimuth(const float angle);
 		float get_azimuth();
+
+		// Elevation, in degrees[-90,90]. 0 is "on the same plane".
+		void set_elevation(const float angle);
+		float get_elevation();
 
 		// Distance, in meters [0.1,10].
 		void set_distance(const float meters);

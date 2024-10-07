@@ -36,6 +36,9 @@ namespace godot {
 		// end-user whether everything's correct.
 		// In runtime, it ought to be correct, and then the children are stored.
 		bool get_players(Players& players) const;
+		// The same as `get_players` but additionally returns false if we're
+		// running in the editor.
+		bool get_players_runtime(Players& players) const;
 		Players runtime_players;
 		// We overwrite the buses of the children during runtime. The initial
 		// bus the user chose during the editor will be stored here.
@@ -55,14 +58,16 @@ namespace godot {
 
 		static bool anaglyph_enabled;
 
+		// Some properties are shared between the two players, and to be set in
+		// this node. This copies that data over to the child nodes.
+		void copy_shared_properties() const;
+		// Tries to find what Camera/AudioListener3D should be listening to this.
+		Node3D* get_listener_node() const;
+
 	protected:
 		static void _bind_methods();
 
 		void _validate_property(PropertyInfo& p_property) const;
-
-		// Some properties are shared between the two players, and to be set in
-		// this node. This copies that data over to the child nodes.
-		void copy_shared_properties() const;
 
 	public:
 		AudioStreamPlayerAnaglyph();
@@ -73,7 +78,21 @@ namespace godot {
 		void _ready() override;
 		void _process(double delta) override;
 
-		// TODO: Methods for playback
+		// These have a bunch of special behaviour, so delegate them to the
+		// child players without keeping track locally.
+		// These methods will also be responsible for ensuring proper buses.
+		// Just the `finish` signal isn't enough, as that only happens on a
+		// full and succesful playback.
+
+		void play(float from_position = 0.0);
+		void seek(float to);
+		void stop();
+		void set_playing(bool playing);
+		bool get_playing() const;
+		float get_playback_position() const;
+
+		void set_stream_paused(bool paused);
+		bool get_stream_paused() const;
 
 		// Shared properties
 		void set_stream(Ref<AudioStream> audio_stream);

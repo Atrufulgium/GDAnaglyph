@@ -49,6 +49,44 @@ Ref<AudioEffectInstance> GDAnaglyph::_instantiate() {
 	return ins;
 }
 
+Vector3 GDAnaglyph::calculate_polar_position(Node3D* audio_source, Node3D* audio_listener) {
+	// World-space difference between the two sources
+	Vector3 global_delta
+		= audio_source->get_global_position()
+		- audio_listener->get_global_position();
+	
+	// Rotate into camera... microphone?-space.
+	// "Basis" is the 3x3 rotation/scaling part of the transform.
+	// We only want to invert the rotational part, so grab the quaternion
+	// separately and apply the inverse ("xform_inv"...?) to our global.
+	// The docs note the quaternion must be normalized, but surely it's
+	// normalized if the source is a transform?
+
+	// Note that we also need to take into account different handedness.
+	// This is effectively a flip in local space.
+	// (idk i didn't think too long about this it *sounds*/behaves correctly)
+	Quaternion quat = audio_listener->get_global_basis().get_rotation_quaternion();
+	Vector3 relative_pos = quat.xform_inv(global_delta);
+	relative_pos.z *= -1;
+
+	// Now the usual "from cartesian to polar coords".
+	float dist = relative_pos.length();
+	if (dist < 0.001) {
+		dist = 0.001;
+	}
+	float azim;
+	if (relative_pos.x == 0 && relative_pos.z == 0) {
+		azim = 0; // atan2 could get (0,0) which throws
+	}
+	else {
+		azim = atan2f(relative_pos.x, relative_pos.z);
+	}
+	float elev = asinf(relative_pos.y / dist); // (arg guaranteed in [-1,1])
+	const float rad2deg = 57.2957805;
+	Vector3 res = Vector3(azim * rad2deg, elev * rad2deg, dist);
+	return res;
+}
+
 void GDAnaglyph::set_wet(const float percentage) {
 	AnaglyphBridge::SetParamScaled(&state, 18, percentage, 0, 100);
 }
@@ -196,18 +234,18 @@ bool GDAnaglyph::get_bypass_reverb() {
 	return AnaglyphBridge::GetParamBoolDirect(&state, 6);
 }
 
-void GDAnaglyph::set_elevation(const float value) {
-	AnaglyphBridge::SetParamScaled(&state, 26, value, -90, 90);
-}
-float GDAnaglyph::get_elevation() {
-	return AnaglyphBridge::GetParamScaledDirect(&state, 26, -90, 90);
-}
-
 void GDAnaglyph::set_azimuth(const float value) {
 	AnaglyphBridge::SetParamScaled(&state, 27, fmodf(value + 180, 360) - 180, -180, 180);
 }
 float GDAnaglyph::get_azimuth() {
 	return AnaglyphBridge::GetParamScaledDirect(&state, 27, -180, 180);
+}
+
+void GDAnaglyph::set_elevation(const float value) {
+	AnaglyphBridge::SetParamScaled(&state, 26, value, -90, 90);
+}
+float GDAnaglyph::get_elevation() {
+	return AnaglyphBridge::GetParamScaledDirect(&state, 26, -90, 90);
 }
 
 void GDAnaglyph::set_distance(const float value) {
@@ -249,7 +287,7 @@ void GDAnaglyph::_bind_methods() {
 	REGISTER(BOOL, bypass_reverb, GDAnaglyph, "bypass", PROPERTY_HINT_NONE, "");
 
 	ADD_GROUP("Position", "");
-	REGISTER(FLOAT, elevation, GDAnaglyph, "angle", PROPERTY_HINT_RANGE, "-90,90,0.1,degrees");
 	REGISTER(FLOAT, azimuth, GDAnaglyph, "angle", PROPERTY_HINT_RANGE, "-180,180,0.1,or_greater,or_less,degrees");
+	REGISTER(FLOAT, elevation, GDAnaglyph, "angle", PROPERTY_HINT_RANGE, "-90,90,0.1,degrees");
 	REGISTER(FLOAT, distance, GDAnaglyph, "meters", PROPERTY_HINT_RANGE, "0.1,10,0.1,suffix:m");
 }

@@ -2,8 +2,11 @@
 #include "anaglyph_bus_manager.h"
 #include "gdanaglyph_bridge.h"
 
+#include <godot_cpp/classes/audio_listener3d.hpp>
+#include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 using namespace godot;
@@ -18,6 +21,7 @@ AudioStreamPlayerAnaglyph::AudioStreamPlayerAnaglyph() {
 	//anaglyph_state.instantiate();
 	volume = 0;
 	pitch_scale = 1;
+	autoplay = false;
 	max_polyphony = 1;
 	bus = StringName("Master");
 	playback_type = AudioServer::PLAYBACK_TYPE_DEFAULT;
@@ -52,6 +56,12 @@ bool AudioStreamPlayerAnaglyph::get_players(AudioStreamPlayerAnaglyph::Players& 
 	}
 }
 
+bool AudioStreamPlayerAnaglyph::get_players_runtime(AudioStreamPlayerAnaglyph::Players& players) const {
+	if (Engine::get_singleton()->is_editor_hint())
+		return false;
+	return get_players(players);
+}
+
 PackedStringArray AudioStreamPlayerAnaglyph::_get_configuration_warnings() const {
 	PackedStringArray warnings = Node3D::_get_configuration_warnings();
 
@@ -61,6 +71,20 @@ PackedStringArray AudioStreamPlayerAnaglyph::_get_configuration_warnings() const
 		warnings.push_back("An AudioStreamPlayerAnaglyph requires exactly two children:\n- An AudioStreamPlayer for when Anaglyph is enabled; and\n- A fallback AudioStreamPlayer3D when Anaglyph is disabled.");
 	}
 	return warnings;
+}
+
+Node3D* AudioStreamPlayerAnaglyph::get_listener_node() const {
+	// I would've liked to copy the following code as verbatim as possible.
+	// Unfortunately, Viewport::get_audio_listener_3d() is not exposed.
+	// https://github.com/godotengine/godot/blob/e7c39efdb15eaaeb133ed8d0ff0ba0891f8ca676/scene/3d/audio_stream_player_3d.cpp#L355
+	// So instead just give up and return the camera's position.
+	// (I could add a method and ask the user to explicitly register the listener
+	//  node, but that feels very awkward.)
+	// TOOD: Not much I can do about it here, but what happens when you have
+	// multiple viewports/cameras?
+	Viewport* vp = get_viewport();
+	Camera3D* active_camera = vp->get_camera_3d();
+	return active_camera;
 }
 
 void AudioStreamPlayerAnaglyph::_enter_tree() {
@@ -107,12 +131,14 @@ void AudioStreamPlayerAnaglyph::_process(double delta) {
 		return;
 	}
 
+	// Get the anaglyph positional parameters
+	Vector3 polar = GDAnaglyph::calculate_polar_position(this, get_listener_node());
+
 	// Decide whether to process Anaglyph or the fallback.
 	// Switching between Anaglyph and the fallback should be as smooth as
 	// possible as it can happen at any time for a variety of reasons.
 	// Priority: global override > local override > default behaviour.
-	bool use_anaglyph = true;
-	// TODO: Take `max_anaglyph_range` into account
+	bool use_anaglyph = polar.z < max_anaglyph_range;
 	if (forcing == FORCE_ANAGLYPH_ON) {
 		use_anaglyph = true;
 	}
@@ -127,10 +153,12 @@ void AudioStreamPlayerAnaglyph::_process(double delta) {
 	// tree or anything, we just send the inactive node's audio to a muted bus.
 	// TODO: Work with signals ffs
 	// TODO: Use a proper lending system instead of just having one anaglyph bus.
-	StringName anaglyph_bus = AnaglyphBusManager::get_singleton()->get_anaglyph_bus(user_bus);
+	StringName anaglyph_bus = AnaglyphBusManager::get_singleton()->get_anaglyph_bus(user_bus, anaglyph_state);
 	StringName silent_bus = AnaglyphBusManager::get_singleton()->get_silent_bus();
 	if (use_anaglyph) {
-		// TODO: Add and set GDAnaglyph properties
+		anaglyph_state->set_azimuth(polar.x);
+		anaglyph_state->set_elevation(polar.y);
+		anaglyph_state->set_distance(polar.z);
 		runtime_players.anaglyph->set_bus(anaglyph_bus);
 		runtime_players.fallback->set_bus(silent_bus);
 	}
@@ -196,6 +224,8 @@ void AudioStreamPlayerAnaglyph::set_bus(const StringName& p_bus) {
 	// bus with the anaglyph effect that in turn sends it to this bus.
 	// TOOD: Ensure that this redirection persists even if this property is
 	// changed when editting in play mode.
+	// NOTE: The above TODO is *not yet* relevant. Godot's audio interface
+	// does not interact with playmode. This may update some day.
 	bus = p_bus;
 	copy_shared_properties();
 }
@@ -219,6 +249,91 @@ void AudioStreamPlayerAnaglyph::set_max_anaglyph_range(float meters) {
 
 float AudioStreamPlayerAnaglyph::get_max_anaglyph_range() const {
 	return max_anaglyph_range;
+}
+
+void AudioStreamPlayerAnaglyph::play(float from_position) {
+	Players players = Players{};
+	if (!get_players_runtime(players)) {
+		godot::UtilityFunctions::push_warning("You cannot play/stop AudioStreamPlayerAnaglyphs in-editor.\nTo test, try the children, or play your game.");
+		return;
+	}
+
+	players.anaglyph->play(from_position);
+	players.fallback->play(from_position);
+}
+
+void AudioStreamPlayerAnaglyph::seek(float to) {
+	Players players = Players{};
+	if (!get_players_runtime(players)) {
+		godot::UtilityFunctions::push_warning("You cannot seek AudioStreamPlayerAnaglyphs in-editor.\nTo test, try the children, or play your game.");
+		return;
+	}
+
+	players.anaglyph->seek(to);
+	players.fallback->seek(to);
+}
+
+void AudioStreamPlayerAnaglyph::stop() {
+	Players players = Players{};
+	if (!get_players_runtime(players)) {
+		godot::UtilityFunctions::push_warning("You cannot play/stop AudioStreamPlayerAnaglyphs in-editor.\nTo test, try the children, or play your game.");
+		return;
+	}
+
+	players.anaglyph->stop();
+	players.fallback->stop();
+}
+
+void AudioStreamPlayerAnaglyph::set_playing(bool playing) {
+	// See https://github.com/godotengine/godot/blob/db66bd35af704fe0d83ba9348b8c50a48e51b2ba/scene/audio/audio_stream_player_internal.cpp#L289
+	// `set_playing(true)` to a playing instance will reset it to the beginning,
+	// also in "vanilla" AudioStreamPlayers.
+	if (playing) {
+		play();
+	}
+	else {
+		stop();
+	}
+}
+
+bool AudioStreamPlayerAnaglyph::get_playing() const {
+	Players players = Players{};
+	if (!get_players_runtime(players)) {
+		return false;
+	}
+
+	// These should be synced unless (1) user error (2) *weirdness*.
+	// Not assuming any weird path.
+	// Same below for the other "direct" getters.
+	return players.anaglyph->is_playing();
+}
+
+float AudioStreamPlayerAnaglyph::get_playback_position() const {
+	Players players = Players{};
+	if (!get_players_runtime(players)) {
+		return 0;
+	}
+
+	return players.anaglyph->get_playback_position();
+}
+
+void AudioStreamPlayerAnaglyph::set_stream_paused(bool paused) {
+	Players players = Players{};
+	if (!get_players(players)) {
+		return;
+	}
+
+	players.anaglyph->set_stream_paused(paused);
+	players.fallback->set_stream_paused(paused);
+}
+
+bool AudioStreamPlayerAnaglyph::get_stream_paused() const {
+	Players players = Players{};
+	if (!get_players(players)) {
+		return true;
+	}
+
+	return players.anaglyph->get_stream_paused();
 }
 
 void AudioStreamPlayerAnaglyph::set_autoplay(bool p_autoplay) {
@@ -262,6 +377,10 @@ void AudioStreamPlayerAnaglyph::_bind_methods() {
 	REGISTER(OBJECT, stream, AudioStreamPlayerAnaglyph, "stream", PROPERTY_HINT_RESOURCE_TYPE, "AudioStream");
 	REGISTER(FLOAT, volume_db, AudioStreamPlayerAnaglyph, "volume_db", PROPERTY_HINT_RANGE, "-80,24,suffix:dB");
 	REGISTER(FLOAT, pitch_scale, AudioStreamPlayerAnaglyph, "pitch_scale", PROPERTY_HINT_RANGE, "0.01,4,0.01,or_greater");
+	ClassDB::bind_method(D_METHOD("is_playing"), &AudioStreamPlayerAnaglyph::get_playing);
+	ClassDB::bind_method(D_METHOD("set_playing", "enable"), &AudioStreamPlayerAnaglyph::set_playing);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "playing", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR), "set_playing", "is_playing");
+	REGISTER(BOOL, stream_paused, AudioStreamPlayerAnaglyph, "pause", PROPERTY_HINT_NONE, "");
 	REGISTER(BOOL, autoplay, AudioStreamPlayerAnaglyph, "autoplay", PROPERTY_HINT_NONE, "");
 	// This one's hint string is filled by validate_property
 	REGISTER(STRING_NAME, bus, AudioStreamPlayerAnaglyph, "bus", PROPERTY_HINT_ENUM, "");
@@ -275,6 +394,11 @@ void AudioStreamPlayerAnaglyph::_bind_methods() {
 	BIND_ENUM_CONSTANT(FORCE_NONE);
 	BIND_ENUM_CONSTANT(FORCE_ANAGLYPH_ON);
 	BIND_ENUM_CONSTANT(FORCE_ANAGLYPH_OFF);
+
+	ClassDB::bind_method(D_METHOD("play", "from_position"), &AudioStreamPlayerAnaglyph::play, DEFVAL(0.0));
+	ClassDB::bind_method(D_METHOD("seek", "to_position"), &AudioStreamPlayerAnaglyph::seek);
+	ClassDB::bind_method(D_METHOD("stop"), &AudioStreamPlayerAnaglyph::stop);
+	ClassDB::bind_method(D_METHOD("get_playback_position"), &AudioStreamPlayerAnaglyph::get_playback_position);
 
 	ClassDB::bind_static_method("AudioStreamPlayerAnaglyph", D_METHOD("get_anaglyph_enabled"), AudioStreamPlayerAnaglyph::get_anaglyph_enabled);
 	ClassDB::bind_static_method("AudioStreamPlayerAnaglyph", D_METHOD("set_anaglyph_enabled", "anaglyph_enabled"), AudioStreamPlayerAnaglyph::set_anaglyph_enabled);
