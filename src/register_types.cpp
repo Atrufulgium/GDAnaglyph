@@ -1,28 +1,36 @@
+#include "anaglyph_export_plugin.h"
 #include "audio_stream_player_anaglyph.h"
 #include "gdanaglyph.h"
 #include "gdanaglyph_bridge.h"
 #include "register_types.h"
 
 #include <gdextension_interface.h>
+#include <godot_cpp/classes/editor_plugin.hpp>
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
 using namespace godot;
 
 void initialize_gdanaglyph_module(ModuleInitializationLevel p_level) {
-	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
-		return;
+	// idk how module init works lol
+	if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
+		GDREGISTER_CLASS(AnaglyphExportPlugin);
+		GDREGISTER_CLASS(AnaglyphPlugin);
+
+		EditorPlugins::add_by_type<AnaglyphPlugin>();
+	}
+	else if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
+		GDREGISTER_CLASS(AudioStreamPlayerAnaglyph);
+		GDREGISTER_CLASS(GDAnaglyph);
+		GDREGISTER_CLASS(GDAnaglyphInstance);
+
+		// Might as well load the dll at the start.
+		// Note that we won't unload the dll at any point. Let it be cleaned up
+		// together with the entire program.
+		// TODO: Godot doesn't seem to print any debug data on load.
+		AnaglyphBridge::GetEffectData();
 	}
 
-	GDREGISTER_CLASS(AudioStreamPlayerAnaglyph);
-	GDREGISTER_CLASS(GDAnaglyph);
-	GDREGISTER_CLASS(GDAnaglyphInstance);
-
-	// Might as well load the dll at the start.
-	// Note that we won't unload the dll at any point. Let it be cleaned up
-	// together with the entire program.
-	// TODO: Godot doesn't seem to print any debug data on load.
-	AnaglyphBridge::GetEffectData();
 }
 
 void uninitialize_gdanaglyph_module(ModuleInitializationLevel p_level) {
