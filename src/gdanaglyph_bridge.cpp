@@ -221,9 +221,11 @@ UNITY_AUDIODSP_RESULT AnaglyphBridge::GetParam(UnityAudioEffectState* state, int
 	}
 	// It seems to be the case NativeAudio SDK devs are expected to handle
 	// either outputs being null. Nice.
-	// TODO: Godot calls the getter periodically. If this lags (idk why the
-	// Unity version of the plugin lags, maybe something similar), keep track
-	// of Anaglyph's data locally, and only do sets. (Except for resets.)
+	// NOTE: The Unity version of this plugin lags incredibly when changing
+	// parameters. That seems to be a "Unity" problem, as in Godot I don't
+	// have any lag when changing stuff.
+	// If, in the future, lag *is* a problem, just keep all data locally and
+	// only have the setters also interact with Anaglyph.
 	return anaglyph_definition->getfloatparameter(state, index, value, nullptr);
 }
 

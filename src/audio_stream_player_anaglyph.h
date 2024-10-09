@@ -43,6 +43,10 @@ namespace godot {
 		// We overwrite the buses of the children during runtime. The initial
 		// bus the user chose during the editor will be stored here.
 		StringName user_bus;
+		// The bus we overwrite with. This may equal `user_bus` if the anaglyph
+		// buses run out. After returning a borrow, this should be reset to the
+		// empty string.
+		StringName borrowed_bus;
 
 		Ref<AudioStream> audio_stream;
 		float volume;
@@ -56,13 +60,21 @@ namespace godot {
 		ForceStream forcing;
 		Ref<GDAnaglyph> anaglyph_state;
 
+		bool dupe_protection;
+		bool delete_on_finish;
+
 		static bool anaglyph_enabled;
+
+		void borrow_anaglyph();
+		void return_anaglyph();
 
 		// Some properties are shared between the two players, and to be set in
 		// this node. This copies that data over to the child nodes.
 		void copy_shared_properties() const;
 		// Tries to find what Camera/AudioListener3D should be listening to this.
 		Node3D* get_listener_node() const;
+
+		void finish_signal();
 
 	protected:
 		static void _bind_methods();
@@ -123,11 +135,23 @@ namespace godot {
 		void set_anaglyph_state(Ref<GDAnaglyph> anaglyph_state);
 		Ref<GDAnaglyph> get_anaglyph_state() const;
 
+		// Misc
+		void set_dupe_protection(const bool protect);
+		bool get_dupe_protection() const;
+
+		void set_delete_on_finish(const bool del);
+		bool get_delete_on_finish() const;
+
 		// Only does something if the dll is loaded properly.
 		// Otherwise, anaglyph is force-disabled and this automatically
 		// returns `false`, at least until enabled again.
 		static void set_anaglyph_enabled(bool enabled);
 		static bool get_anaglyph_enabled();
+
+		static void set_max_anaglyph_buses(int count);
+		static int get_max_anaglyph_buses();
+
+		static void prepare_anaglyph_buses(int count);
 	};
 }
 

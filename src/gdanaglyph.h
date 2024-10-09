@@ -33,8 +33,8 @@ namespace godot {
 		// Called by the AudioServer to process this effect. When
 		// `_process_silence` is not overridden or it returns false,
 		// this method is called only when the bus is active.
-		virtual void _process(const void* p_src_frames, AudioFrame* p_dst_frames, int32_t p_frame_count) override;
-		virtual bool _process_silence() const override;
+		void _process(const void* p_src_frames, AudioFrame* p_dst_frames, int32_t p_frame_count) override;
+		bool _process_silence() const override;
 	};
 
 	class GDAnaglyph : public AudioEffect {
@@ -50,7 +50,10 @@ namespace godot {
 		GDAnaglyph();
 		~GDAnaglyph();
 
-		virtual Ref<AudioEffectInstance> _instantiate() override;
+		Ref<AudioEffectInstance> _instantiate() override;
+		// So, this stupid `duplicate` method is virtual in the engine itself,
+		// but not in the cpp bindings? What's that about.
+		Ref<Resource> duplicate_including_anaglyph(bool p_subresources = false) const;
 
 		// Returns in the Vector3 the azimuth [x], elevation [y], and distance [z]
 		// so that their respective getters/setters can use them.

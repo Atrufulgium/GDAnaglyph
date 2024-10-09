@@ -27,8 +27,10 @@ void AnaglyphExportPlugin::_export_end() {
 	String full_source_path = ProjectSettings::get_singleton()->globalize_path("res://Anaglyph");
 	String full_target_path = ProjectSettings::get_singleton()->globalize_path(target_path).get_base_dir() + "/Anaglyph";
 	
+	if (DirAccess::dir_exists_absolute(full_target_path)) {
+		clear_folder_absolute(full_target_path);
+	}
 	// Godot only copies file per file, bleh.
-	clear_folder_absolute(full_target_path);
 	Error res = copy_dir_absolute(full_source_path, full_target_path);
 	if (res != OK) {
 		UtilityFunctions::push_error("Copying Anaglyph failed: ", res, "\nTry manually copying the `Anaglyph/` directory (itself) next to the built executable.");

@@ -28,9 +28,21 @@ AudioStreamPlayerAnaglyph::AudioStreamPlayerAnaglyph() {
 
 	max_anaglyph_range = 10;
 	forcing = FORCE_NONE;
+
+	dupe_protection = true;
+	delete_on_finish = false;
 }
 
-AudioStreamPlayerAnaglyph::~AudioStreamPlayerAnaglyph() { }
+AudioStreamPlayerAnaglyph::~AudioStreamPlayerAnaglyph() {
+	// This shouldn't be needed, but in case someone frees a node that's still
+	// playing at the time.
+	// Like, who does that?
+	// But hey, just in case.
+	// (its 2300pm im probably fucking up destructor order hey future self TODO)
+	if (!Engine::get_singleton()->is_editor_hint()) {
+		return_anaglyph();
+	}
+}
 
 bool AudioStreamPlayerAnaglyph::get_players(AudioStreamPlayerAnaglyph::Players& players) const {
 	if (get_child_count() != 2) {
@@ -115,8 +127,28 @@ void AudioStreamPlayerAnaglyph::_ready() {
 		runtime_players = Players{};
 		godot::UtilityFunctions::push_warning("Malformed tree structure in AudioStreamPlayerAnaglyph.\nIt has been disabled, please fix it in the editor.\n(It requires two children, an AudioStreamPlayer for Anaglyph, and a fallback AudioStreamPlayer3D.)");
 		get_parent()->remove_child(this);
+		return;
 	}
+
+	// Duplicate resources are a *mess* that you'd not ever want.
+	// (Both audio gets send to the same Anaglyph instance so you get artifacts,
+	//  only one of their positional settings is applied, etc etc.)
+	// OTOH, it's *really* easy to accidentally introduce duplicates by just
+	// copying over a node or resource, either in-editor or at runtime.
+	// So prevent duplication by being... uhh... expensive.
+	// The downside is that doing this prevents playing around with sound
+	// settings while playing. So allow a toggle to disable this protection.
+	if (dupe_protection) {
+		anaglyph_state = anaglyph_state->duplicate_including_anaglyph();
+	}
+
+	// (The two child players should at all times be synced)
+	runtime_players.anaglyph->connect("finished", Callable(this, "_finish_signal_handler_internal_do_not_call"));
+
 	user_bus = bus;
+	if (autoplay) {
+		borrow_anaglyph();
+	}
 }
 
 void AudioStreamPlayerAnaglyph::_process(double delta) {
@@ -128,6 +160,11 @@ void AudioStreamPlayerAnaglyph::_process(double delta) {
 	// If the tree is not setup properly, don't do anything.
 	Players players = Players{};
 	if (!get_players(players)) {
+		return;
+	}
+
+	// Only run when playing. (The other definition.)
+	if (!get_playing()) {
 		return;
 	}
 
@@ -151,9 +188,9 @@ void AudioStreamPlayerAnaglyph::_process(double delta) {
 
 	// To ensure both are synced in playback, we don't remove the node from the
 	// tree or anything, we just send the inactive node's audio to a muted bus.
-	// TODO: Work with signals ffs
-	// TODO: Use a proper lending system instead of just having one anaglyph bus.
-	StringName anaglyph_bus = AnaglyphBusManager::get_singleton()->get_anaglyph_bus(user_bus, anaglyph_state);
+	// TODO: Only update buses if use_anaglyph changes. Dunno how expensive the
+	// set_bus call is.
+	StringName anaglyph_bus = borrowed_bus;
 	StringName silent_bus = AnaglyphBusManager::get_singleton()->get_silent_bus();
 	if (use_anaglyph) {
 		anaglyph_state->set_azimuth(polar.x);
@@ -191,6 +228,12 @@ void AudioStreamPlayerAnaglyph::copy_shared_properties() const {
 }
 
 void AudioStreamPlayerAnaglyph::set_stream(Ref<AudioStream> p_audio_stream) {
+	// "Setting this property stops all currently playing sounds." - gdocs
+	// So, this is a return point too.
+	// (I checked, even if it's set to the same, it stops.)
+	if (!Engine::get_singleton()->is_editor_hint()) {
+		return_anaglyph();
+	}
 	audio_stream = p_audio_stream;
 	copy_shared_properties();
 }
@@ -258,6 +301,7 @@ void AudioStreamPlayerAnaglyph::play(float from_position) {
 		return;
 	}
 
+	borrow_anaglyph();
 	players.anaglyph->play(from_position);
 	players.fallback->play(from_position);
 }
@@ -280,6 +324,7 @@ void AudioStreamPlayerAnaglyph::stop() {
 		return;
 	}
 
+	return_anaglyph();
 	players.anaglyph->stop();
 	players.fallback->stop();
 }
@@ -325,6 +370,16 @@ void AudioStreamPlayerAnaglyph::set_stream_paused(bool paused) {
 
 	players.anaglyph->set_stream_paused(paused);
 	players.fallback->set_stream_paused(paused);
+
+	if (Engine::get_singleton()->is_editor_hint()) {
+		return;
+	}
+	if (get_stream_paused()) {
+		return_anaglyph();
+	}
+	else {
+		borrow_anaglyph();
+	}
 }
 
 bool AudioStreamPlayerAnaglyph::get_stream_paused() const {
@@ -362,6 +417,22 @@ Ref<GDAnaglyph> AudioStreamPlayerAnaglyph::get_anaglyph_state() const {
 	return anaglyph_state;
 }
 
+void AudioStreamPlayerAnaglyph::set_dupe_protection(const bool protect) {
+	dupe_protection = protect;
+}
+
+bool AudioStreamPlayerAnaglyph::get_dupe_protection() const {
+	return dupe_protection;
+}
+
+void AudioStreamPlayerAnaglyph::set_delete_on_finish(const bool del) {
+	delete_on_finish = del;
+}
+
+bool AudioStreamPlayerAnaglyph::get_delete_on_finish() const {
+	return delete_on_finish;
+}
+
 void AudioStreamPlayerAnaglyph::set_anaglyph_enabled(bool enabled) {
 	anaglyph_enabled = enabled;
 }
@@ -370,6 +441,18 @@ bool AudioStreamPlayerAnaglyph::get_anaglyph_enabled() {
 	if (AnaglyphBridge::GetEffectData() == nullptr)
 		return false;
 	return anaglyph_enabled;
+}
+
+void AudioStreamPlayerAnaglyph::set_max_anaglyph_buses(int count) {
+	AnaglyphBusManager::get_singleton()->set_max_anaglyph_buses(count);
+}
+
+int AudioStreamPlayerAnaglyph::get_max_anaglyph_buses() {
+	return AnaglyphBusManager::get_singleton()->get_max_anaglyph_buses();
+}
+
+void AudioStreamPlayerAnaglyph::prepare_anaglyph_buses(int count) {
+	AnaglyphBusManager::get_singleton()->prepare_anaglyph_buses(count);
 }
 
 void AudioStreamPlayerAnaglyph::_bind_methods() {
@@ -391,6 +474,10 @@ void AudioStreamPlayerAnaglyph::_bind_methods() {
 	REGISTER(INT, forcing, AudioStreamPlayerAnaglyph, "forcing", PROPERTY_HINT_ENUM, "None,Anaglyph On,Anaglyph Off");
 	REGISTER_USAGE(OBJECT, anaglyph_state, AudioStreamPlayerAnaglyph, "anaglyph_state", PROPERTY_HINT_RESOURCE_TYPE, "GDAnaglyph", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_EDITOR_INSTANTIATE_OBJECT);
 
+	ADD_GROUP("Misc settings", "");
+	REGISTER(BOOL, dupe_protection, AudioStreamPlayerAnaglyph, "duplication_protection", PROPERTY_HINT_NONE, "");
+	REGISTER(BOOL, delete_on_finish, AudioStreamPlayerAnaglyph, "delete_on_finish", PROPERTY_HINT_NONE, "");
+
 	BIND_ENUM_CONSTANT(FORCE_NONE);
 	BIND_ENUM_CONSTANT(FORCE_ANAGLYPH_ON);
 	BIND_ENUM_CONSTANT(FORCE_ANAGLYPH_OFF);
@@ -402,6 +489,14 @@ void AudioStreamPlayerAnaglyph::_bind_methods() {
 
 	ClassDB::bind_static_method("AudioStreamPlayerAnaglyph", D_METHOD("get_anaglyph_enabled"), AudioStreamPlayerAnaglyph::get_anaglyph_enabled);
 	ClassDB::bind_static_method("AudioStreamPlayerAnaglyph", D_METHOD("set_anaglyph_enabled", "anaglyph_enabled"), AudioStreamPlayerAnaglyph::set_anaglyph_enabled);
+
+	ClassDB::bind_static_method("AudioStreamPlayerAnaglyph", D_METHOD("get_max_anaglyph_buses"), AudioStreamPlayerAnaglyph::get_max_anaglyph_buses);
+	ClassDB::bind_static_method("AudioStreamPlayerAnaglyph", D_METHOD("set_max_anaglyph_buses", "count"), AudioStreamPlayerAnaglyph::set_max_anaglyph_buses);
+
+	ClassDB::bind_static_method("AudioStreamPlayerAnaglyph", D_METHOD("prepare_anaglyph_buses", "count"), AudioStreamPlayerAnaglyph::prepare_anaglyph_buses);
+
+	ADD_SIGNAL(MethodInfo("finished"));
+	ClassDB::bind_method(D_METHOD("_finish_signal_handler_internal_do_not_call"), &AudioStreamPlayerAnaglyph::finish_signal);
 }
 
 void AudioStreamPlayerAnaglyph::_validate_property(PropertyInfo& p_property) const {
@@ -415,5 +510,28 @@ void AudioStreamPlayerAnaglyph::_validate_property(PropertyInfo& p_property) con
 			options += AudioServer::get_singleton()->get_bus_name(i);
 		}
 		p_property.hint_string = options;
+	}
+}
+
+void AudioStreamPlayerAnaglyph::borrow_anaglyph() {
+	// In case the user forgets to return
+	if (!borrowed_bus.is_empty()) {
+		return_anaglyph();
+	}
+	borrowed_bus = AnaglyphBusManager::get_singleton()->borrow_anaglyph_bus(user_bus, anaglyph_state);
+}
+
+void AudioStreamPlayerAnaglyph::return_anaglyph() {
+	if (borrowed_bus != user_bus && !borrowed_bus.is_empty()) {
+		AnaglyphBusManager::get_singleton()->return_anaglyph_bus(borrowed_bus);
+	}
+	borrowed_bus = "";
+}
+
+void AudioStreamPlayerAnaglyph::finish_signal() {
+	return_anaglyph();
+	emit_signal("finished");
+	if (delete_on_finish) {
+		this->queue_free();
 	}
 }

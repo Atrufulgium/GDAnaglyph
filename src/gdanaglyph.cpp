@@ -49,6 +49,17 @@ Ref<AudioEffectInstance> GDAnaglyph::_instantiate() {
 	return ins;
 }
 
+Ref<Resource> GDAnaglyph::duplicate_including_anaglyph(bool p_subresources) const {
+	Ref<GDAnaglyph> res = duplicate(p_subresources);
+	if (res->state.samplerate != 0) {
+		// If we have a sample-rate, this thing is properly instantiated and
+		// needs its anaglyph state changed as well (otherwise there is no
+		// point in duplication).
+		AnaglyphBridge::Create(&res->state);
+	}
+	return res;
+}
+
 Vector3 GDAnaglyph::calculate_polar_position(Node3D* audio_source, Node3D* audio_listener) {
 	// World-space difference between the two sources
 	Vector3 global_delta
