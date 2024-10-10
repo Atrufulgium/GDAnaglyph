@@ -8,6 +8,10 @@ AnaglyphBusManager* AnaglyphBusManager::singleton = nullptr;
 char* AnaglyphBusManager::a_bus_name = "[Anaglyph_Bus]";
 char* AnaglyphBusManager::s_bus_name = "[Silent_Bus]";
 
+int AnaglyphBusManager::total_bus_count() const {
+	return anaglyph_buses.size() + used_anaglyph_buses;
+}
+
 StringName AnaglyphBusManager::add_bus(StringName base_name) {
 	String name = base_name;
 	int attempts = 1;
@@ -75,7 +79,7 @@ AnaglyphBusManager::AnaglyphBusManager() {
 	anaglyph_buses = Vector<StringName>();
 	audio = AudioServer::get_singleton();
 	used_anaglyph_buses = 0;
-	max_anaglyph_buses = 8;
+	max_anaglyph_buses = 4;
 }
 
 AnaglyphBusManager::~AnaglyphBusManager() {
@@ -84,7 +88,7 @@ AnaglyphBusManager::~AnaglyphBusManager() {
 }
 
 void AnaglyphBusManager::prepare_anaglyph_buses(int count) {
-	int maximum_added = max_anaglyph_buses - used_anaglyph_buses;
+	int maximum_added = max_anaglyph_buses - total_bus_count();
 	if (count < 0)
 		count = 0;
 	if (count > maximum_added)
@@ -103,7 +107,7 @@ StringName AnaglyphBusManager::borrow_anaglyph_bus(const StringName& base_bus, c
 	if (anaglyph_buses.size() > 0) {
 		int last = anaglyph_buses.size() - 1;
 		name = anaglyph_buses.get(last);
-		int index = get_bus_index(name);
+		index = get_bus_index(name);
 		if (index == -1) {
 			// We couldn't find the bus, yet it existed in the vector.
 			// This means AudioServer::set_bus_layout did a thing.
@@ -118,7 +122,8 @@ StringName AnaglyphBusManager::borrow_anaglyph_bus(const StringName& base_bus, c
 	if (index == -1) {
 		// Either the pool was empty or everything was invalidated.
 		// Either way, grab a new bus if it doesn't push us past the limit.
-		if (used_anaglyph_buses < max_anaglyph_buses) {
+
+		if (total_bus_count() < max_anaglyph_buses) {
 			name = add_bus(StringName(a_bus_name));
 			index = get_bus_index(name);
 		}
@@ -149,10 +154,12 @@ void AnaglyphBusManager::return_anaglyph_bus(const StringName& anaglyph_bus) {
 	// Otherwise, delete the bus instead.
 	// (That may happen if the user reduces max_anaglyph_buses during runtime.)
 	used_anaglyph_buses--;
-	if (anaglyph_buses.size() + used_anaglyph_buses < max_anaglyph_buses) {
-		anaglyph_buses.push_back(anaglyph_bus);
+	bool push = total_bus_count() < max_anaglyph_buses;
+	if (push) {
+		// Source: returns `true` on failure.
+		push &= !anaglyph_buses.push_back(anaglyph_bus);
 	}
-	else {
+	if (!push) {
 		int index = get_bus_index(anaglyph_bus);
 		if (index >= 0) {
 			audio->remove_bus(index);
@@ -175,7 +182,7 @@ void AnaglyphBusManager::set_max_anaglyph_buses(int max) {
 	//   anaglyph_buses.size() + used_anaglyph_buses < max
 	// We can only change the former.
 	// (Note that this is always true when increasing.)
-	if (anaglyph_buses.size() + used_anaglyph_buses >= max) {
+	if (total_bus_count() >= max) {
 		int new_size = max - used_anaglyph_buses;
 		if (new_size < 0) {
 			new_size = 0;

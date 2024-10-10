@@ -18,6 +18,9 @@ namespace godot {
 		// playing, but when returned, will delete them from the pool.
 		int max_anaglyph_buses;
 		int used_anaglyph_buses;
+		// The total amount of buses that exist, both inactive and active.
+		// `max_anaglyph_buses` should only be compared with this number.
+		int total_bus_count() const;
 		
 		// These were formerly a StringName, but godot crashes on trying to
 		// static-init most of its types.

@@ -5,6 +5,7 @@
 #include <godot_cpp/classes/audio_listener3d.hpp>
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/main_loop.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -125,7 +126,8 @@ void AudioStreamPlayerAnaglyph::_ready() {
 
 	if (!get_players(runtime_players)) {
 		runtime_players = Players{};
-		godot::UtilityFunctions::push_warning("Malformed tree structure in AudioStreamPlayerAnaglyph.\nIt has been disabled, please fix it in the editor.\n(It requires two children, an AudioStreamPlayer for Anaglyph, and a fallback AudioStreamPlayer3D.)");
+		godot::UtilityFunctions::push_warning("Malformed tree structure in AudioStreamPlayerAnaglyph.\nIt has been removed from the tree, please fix it in the editor.\n(It requires two children, an AudioStreamPlayer for Anaglyph, and a fallback AudioStreamPlayer3D.)");
+		return_anaglyph();
 		get_parent()->remove_child(this);
 		return;
 	}
@@ -159,7 +161,7 @@ void AudioStreamPlayerAnaglyph::_process(double delta) {
 
 	// If the tree is not setup properly, don't do anything.
 	Players players = Players{};
-	if (!get_players(players)) {
+	if (!get_players(players) || audio_stream == nullptr || anaglyph_state == nullptr) {
 		return;
 	}
 
@@ -455,6 +457,55 @@ void AudioStreamPlayerAnaglyph::prepare_anaglyph_buses(int count) {
 	AnaglyphBusManager::get_singleton()->prepare_anaglyph_buses(count);
 }
 
+void AudioStreamPlayerAnaglyph::play_oneshot(
+	Ref<AudioStream> stream,
+	Vector3 global_position,
+	float volume_db,
+	Ref<GDAnaglyph> anaglyph_settings,
+	StringName bus
+) {
+	if (Engine::get_singleton()->is_editor_hint()) {
+		UtilityFunctions::push_warning("Attempted to play Anaglyph oneshot in the editor. This is only supported when playing.");
+		return;
+	}
+	if (stream == nullptr) {
+		UtilityFunctions::push_error("Could not play_oneshot a sound (provided stream was `null`).");
+		return;
+	}
+
+	MainLoop* loop = Engine::get_singleton()->get_main_loop();
+	SceneTree* tree = (SceneTree*)loop;
+	if (tree == nullptr) {
+		UtilityFunctions::push_error("Could not play_oneshot a sound (could not find the scene tree).");
+		return;
+	}
+	// The hierarchy Window : Viewport : Node is not exposed...
+	Node* parent = (Node*)tree->get_root();
+	if (parent == nullptr) {
+		UtilityFunctions::push_error("Could not play_oneshot a sound (could not find the scene root).");
+		return;
+	}
+
+	AudioStreamPlayerAnaglyph* node = memnew(AudioStreamPlayerAnaglyph);
+	if (anaglyph_settings == nullptr) {
+		node->set_anaglyph_state(memnew(GDAnaglyph));
+	}
+	else {
+		node->set_anaglyph_state(anaglyph_settings->duplicate_including_anaglyph());
+	}
+	node->set_dupe_protection(false);
+	node->set_delete_on_finish(true);
+	parent->add_child(node, true, INTERNAL_MODE_BACK);
+	
+	node->set_global_position(global_position);
+	// These setters only afterwards as the children only get created on
+	// _enter_tree()
+	node->set_stream(stream);
+	node->set_volume_db(volume_db);
+	node->set_bus(bus);
+	node->play();
+}
+
 void AudioStreamPlayerAnaglyph::_bind_methods() {
 	ADD_GROUP("Shared stream settings", "");
 	REGISTER(OBJECT, stream, AudioStreamPlayerAnaglyph, "stream", PROPERTY_HINT_RESOURCE_TYPE, "AudioStream");
@@ -494,6 +545,13 @@ void AudioStreamPlayerAnaglyph::_bind_methods() {
 	ClassDB::bind_static_method("AudioStreamPlayerAnaglyph", D_METHOD("set_max_anaglyph_buses", "count"), AudioStreamPlayerAnaglyph::set_max_anaglyph_buses);
 
 	ClassDB::bind_static_method("AudioStreamPlayerAnaglyph", D_METHOD("prepare_anaglyph_buses", "count"), AudioStreamPlayerAnaglyph::prepare_anaglyph_buses);
+	
+	ClassDB::bind_static_method(
+		"AudioStreamPlayerAnaglyph",
+		D_METHOD("play_oneshot", "audio_stream", "global_position", "volume_db", "anaglyph_settings", "bus"),
+		&AudioStreamPlayerAnaglyph::play_oneshot,
+		DEFVAL(0.0), DEFVAL(nullptr), DEFVAL("Master")
+	);
 
 	ADD_SIGNAL(MethodInfo("finished"));
 	ClassDB::bind_method(D_METHOD("_finish_signal_handler_internal_do_not_call"), &AudioStreamPlayerAnaglyph::finish_signal);

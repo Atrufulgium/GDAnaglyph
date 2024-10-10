@@ -152,6 +152,16 @@ namespace godot {
 		static int get_max_anaglyph_buses();
 
 		static void prepare_anaglyph_buses(int count);
+
+		// Plays a stream once at a position by instantiating a node at the
+		// root of the active scene, and deleting it once it's done.
+		static void play_oneshot(
+			Ref<AudioStream> stream,
+			Vector3 global_position,
+			float volume_db = 0,
+			Ref<GDAnaglyph> anaglyph_settings = nullptr,
+			StringName bus = "Master"
+		);
 	};
 }
 
