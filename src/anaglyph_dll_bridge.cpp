@@ -1,9 +1,9 @@
 #include "anaglyph_dll_bridge.h"
+#include "helpers.h"
 
 #include <godot_cpp/classes/audio_server.hpp>
 #include <godot_cpp/core/error_macros.hpp>
 #include <godot_cpp/variant/variant.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 
 #include <windows.h>
 #include <libloaderapi.h>
@@ -30,7 +30,8 @@ UnityAudioEffectDefinition* AnaglyphBridge::GetEffectData() {
 		loading_failed = true;
 		return def;
 	}
-	godot::UtilityFunctions::print("Finished processing Anaglyph dll!\nDll: ", def->name, " Version: ", def->pluginversion);
+	AnaglyphHelpers::print("Finished processing Anaglyph dll!");
+	AnaglyphHelpers::print("Dll: ", def->name, " Version: ", def->pluginversion);
 	return def;
 }
 
@@ -65,7 +66,7 @@ int AnaglyphBridge::get_dsp_buffer_size() {
 
 	AudioServer* audio = AudioServer::get_singleton();
 	if (audio == nullptr) {
-		godot::UtilityFunctions::print("Can't even guess DSP buffer size reasonably smh i give up");
+		AnaglyphHelpers::print("Can't even guess DSP buffer size reasonably smh i give up");
 		computed_buffer_size = 512;
 		return computed_buffer_size;
 	}
@@ -77,12 +78,12 @@ int AnaglyphBridge::get_dsp_buffer_size() {
 	computed_buffer_size = closest_power_of_2(latency * mix_rate);
 	if (computed_buffer_size == 0)  // This should *really* never happen, but...
 		computed_buffer_size = 512; // if it's 0 Anaglyph cries.
-	godot::UtilityFunctions::print("Guessed DSP buffer size ", computed_buffer_size, " (latency ", latency, "; rate ", mix_rate, ")");
+	AnaglyphHelpers::print("Guessed DSP buffer size ", computed_buffer_size, " (latency ", latency, "; rate ", mix_rate, ")");
 	return computed_buffer_size;
 }
 
 UnityAudioEffectDefinition* AnaglyphBridge::GetDataFromDLL() {
-	godot::UtilityFunctions::print("Loading Anaglyph dll at ", dll_path.c_str());
+	AnaglyphHelpers::print("Loading Anaglyph dll at ", dll_path.c_str());
 	HMODULE dll = LoadLibraryA(dll_path.c_str());
 	ERR_FAIL_NULL_V_MSG(dll, nullptr, "Did not find Anaglyph dll.");
 
@@ -96,11 +97,11 @@ UnityAudioEffectDefinition* AnaglyphBridge::GetDataFromDLL() {
 	int effects = call(&defs);
 
 	if (effects != 1)
-		godot::UtilityFunctions::push_warning("Expected Anaglyph to have 1 effect, but got ", effects, " effects instead.\nThis _may_ not be fatal, but likely is.");
+		AnaglyphHelpers::print_warning("Expected Anaglyph to have 1 effect, but got ", effects, " effects instead.\nThis _may_ not be fatal, but likely is.");
 	anaglyph_definition = *defs;
 
 	if (anaglyph_definition->pluginversion != 2308)
-		godot::UtilityFunctions::push_warning("Expected Anaglyph version 0.9.4c (internal version 2308), but got internal version ", anaglyph_definition->pluginversion, " instead.\nWhile this still may work properly, this is not supported and may crash.");
+		AnaglyphHelpers::print_warning("Expected Anaglyph version 0.9.4c (internal version 2308), but got internal version ", anaglyph_definition->pluginversion, " instead.\nWhile this still may work properly, this is not supported and may crash.");
 	return anaglyph_definition;
 }
 
@@ -108,7 +109,7 @@ void AnaglyphBridge::DisableAnaglyph(std::string msg) {
 	anaglyph_definition = nullptr;
 	if (loading_failed == false) {
 		loading_failed = true;
-		godot::UtilityFunctions::push_error(msg.c_str());
+		AnaglyphHelpers::print_error(msg.c_str());
 	}
 }
 

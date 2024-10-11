@@ -1,8 +1,6 @@
 #include "anaglyph_effect.h"
 #include "anaglyph_dll_bridge.h"
 
-#include <godot_cpp/variant/utility_functions.hpp>
-
 using namespace godot;
 
 AnaglyphEffectData::AnaglyphEffectData() {

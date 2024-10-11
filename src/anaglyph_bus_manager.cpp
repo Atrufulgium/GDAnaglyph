@@ -1,6 +1,5 @@
 #include "anaglyph_bus_manager.h"
-
-#include <godot_cpp/variant/utility_functions.hpp>
+#include "helpers.h"
 
 using namespace godot;
 
@@ -40,7 +39,7 @@ StringName AnaglyphBusManager::add_bus(StringName base_name) {
 	int insert_index = num_buses;
 	audio->add_bus(-1);
 	audio->set_bus_name(insert_index, name);
-	godot::UtilityFunctions::print("Added Anaglyph audio bus ", name);
+	AnaglyphHelpers::print("Added Anaglyph audio bus ", name);
 	return name;
 }
 
@@ -69,7 +68,7 @@ AnaglyphBusManager* AnaglyphBusManager::get_singleton() {
 	if (singleton == nullptr) {
 		singleton = new AnaglyphBusManager();
 		if (singleton == nullptr) {
-			godot::UtilityFunctions::push_error("Couldn't allocate bus manager, expect a crash *very* soon.");
+			AnaglyphHelpers::print_error("Couldn't allocate bus manager, expect a crash *very* soon.");
 		}
 	}
 	return singleton;
@@ -158,7 +157,7 @@ StringName AnaglyphBusManager::borrow_anaglyph_bus(
 	else {
 		Ref<AnaglyphEffect> effect = audio->get_bus_effect(index, 0);
 		if (effect == nullptr) {
-			UtilityFunctions::push_error("Internal Anaglyph busses have been messed with... Uhh... Don't do that.");
+			AnaglyphHelpers::print_error("Internal Anaglyph busses have been messed with... Uhh... Don't do that.");
 		}
 		else {
 			effect->set_effect_data(anaglyph_data);
@@ -186,7 +185,7 @@ void AnaglyphBusManager::return_anaglyph_bus(const StringName& anaglyph_bus) {
 		int index = get_bus_index(anaglyph_bus);
 		if (index >= 0) {
 			audio->remove_bus(index);
-			godot::UtilityFunctions::print("Removed Anaglyph audio bus ", anaglyph_bus);
+			AnaglyphHelpers::print("Removed Anaglyph audio bus ", anaglyph_bus);
 		}
 	}
 }
@@ -212,7 +211,7 @@ void AnaglyphBusManager::set_max_anaglyph_buses(int max) {
 		}
 		int delta = anaglyph_buses.size() - new_size;
 		if (delta > 0) {
-			godot::UtilityFunctions::print("Removed ", delta, " Anaglyph audio buses");
+			AnaglyphHelpers::print("Removed ", delta, " Anaglyph audio buses");
 		}
 		anaglyph_buses.resize(new_size);
 	}

@@ -1,6 +1,7 @@
 #include "audio_stream_player_anaglyph.h"
 #include "anaglyph_bus_manager.h"
 #include "anaglyph_dll_bridge.h"
+#include "helpers.h"
 
 #include <godot_cpp/classes/audio_listener3d.hpp>
 #include <godot_cpp/classes/camera3d.hpp>
@@ -8,7 +9,6 @@
 #include <godot_cpp/classes/main_loop.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/viewport.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 
 using namespace godot;
 
@@ -127,7 +127,7 @@ void AudioStreamPlayerAnaglyph::_ready() {
 
 	if (!get_players(runtime_players)) {
 		runtime_players = Players{};
-		godot::UtilityFunctions::push_warning("Malformed tree structure in AudioStreamPlayerAnaglyph.\nIt has been removed from the tree, please fix it in the editor.\n(It requires two children, an AudioStreamPlayer for Anaglyph, and a fallback AudioStreamPlayer3D.)");
+		AnaglyphHelpers::print_warning("Malformed tree structure in AudioStreamPlayerAnaglyph.\nIt has been removed from the tree, please fix it in the editor.\n(It requires two children, an AudioStreamPlayer for Anaglyph, and a fallback AudioStreamPlayer3D.)");
 		return_anaglyph();
 		get_parent()->remove_child(this);
 		return;
@@ -170,7 +170,7 @@ void AudioStreamPlayerAnaglyph::_process(double delta) {
 	}
 
 	// Get the anaglyph positional parameters
-	Vector3 polar = AnaglyphEffect::calculate_polar_position(this, get_listener_node());
+	Vector3 polar = AnaglyphHelpers::calculate_polar_position(this, get_listener_node());
 
 	// Decide whether to process Anaglyph or the fallback.
 	// Switching between Anaglyph and the fallback should be as smooth as
@@ -318,7 +318,7 @@ float AudioStreamPlayerAnaglyph::get_max_anaglyph_range() const {
 void AudioStreamPlayerAnaglyph::play(float from_position) {
 	Players players = Players{};
 	if (!get_players_runtime(players)) {
-		godot::UtilityFunctions::push_warning("You cannot play/stop AudioStreamPlayerAnaglyphs in-editor.\nTo test, try the children, or play your game.");
+		AnaglyphHelpers::print_warning("You cannot play/stop AudioStreamPlayerAnaglyphs in-editor.\nTo test, try the children, or play your game.");
 		return;
 	}
 
@@ -330,7 +330,7 @@ void AudioStreamPlayerAnaglyph::play(float from_position) {
 void AudioStreamPlayerAnaglyph::seek(float to) {
 	Players players = Players{};
 	if (!get_players_runtime(players)) {
-		godot::UtilityFunctions::push_warning("You cannot seek AudioStreamPlayerAnaglyphs in-editor.\nTo test, try the children, or play your game.");
+		AnaglyphHelpers::print_warning("You cannot seek AudioStreamPlayerAnaglyphs in-editor.\nTo test, try the children, or play your game.");
 		return;
 	}
 
@@ -341,7 +341,7 @@ void AudioStreamPlayerAnaglyph::seek(float to) {
 void AudioStreamPlayerAnaglyph::stop() {
 	Players players = Players{};
 	if (!get_players_runtime(players)) {
-		godot::UtilityFunctions::push_warning("You cannot play/stop AudioStreamPlayerAnaglyphs in-editor.\nTo test, try the children, or play your game.");
+		AnaglyphHelpers::print_warning("You cannot play/stop AudioStreamPlayerAnaglyphs in-editor.\nTo test, try the children, or play your game.");
 		return;
 	}
 
@@ -483,24 +483,24 @@ void AudioStreamPlayerAnaglyph::play_oneshot(
 	StringName bus
 ) {
 	if (Engine::get_singleton()->is_editor_hint()) {
-		UtilityFunctions::push_warning("Attempted to play Anaglyph oneshot in the editor. This is only supported when playing.");
+		AnaglyphHelpers::print_warning("Attempted to play Anaglyph oneshot in the editor. This is only supported when playing.");
 		return;
 	}
 	if (stream == nullptr) {
-		UtilityFunctions::push_error("Could not play_oneshot a sound (provided stream was `null`).");
+		AnaglyphHelpers::print_error("Could not play_oneshot a sound (provided stream was `null`).");
 		return;
 	}
 
 	MainLoop* loop = Engine::get_singleton()->get_main_loop();
 	SceneTree* tree = (SceneTree*)loop;
 	if (tree == nullptr) {
-		UtilityFunctions::push_error("Could not play_oneshot a sound (could not find the scene tree).");
+		AnaglyphHelpers::print_error("Could not play_oneshot a sound (could not find the scene tree).");
 		return;
 	}
 	// The hierarchy Window : Viewport : Node is not exposed...
 	Node* parent = (Node*)tree->get_root();
 	if (parent == nullptr) {
-		UtilityFunctions::push_error("Could not play_oneshot a sound (could not find the scene root).");
+		AnaglyphHelpers::print_error("Could not play_oneshot a sound (could not find the scene root).");
 		return;
 	}
 

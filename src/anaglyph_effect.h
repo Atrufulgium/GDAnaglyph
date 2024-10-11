@@ -8,7 +8,6 @@
 #include <godot_cpp/classes/audio_effect.hpp>
 #include <godot_cpp/classes/audio_effect_instance.hpp>
 #include <godot_cpp/classes/audio_frame.hpp>
-#include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/variant/vector3.hpp>
 
 namespace godot {
@@ -99,10 +98,6 @@ namespace godot {
 		// So, this stupid `duplicate` method is virtual in the engine itself,
 		// but not in the cpp bindings? What's that about.
 		Ref<Resource> duplicate_including_anaglyph(bool p_subresources = false) const;
-
-		// Returns in the Vector3 the azimuth [x], elevation [y], and distance [z]
-		// so that their respective getters/setters can use them.
-		static Vector3 calculate_polar_position(Node3D* audio_source, Node3D* audio_listener);
 
 		// Sets all effect data and sends it to Anaglyph.
 		// This also causes the future updates of `data` to be sent to Anaglyph

@@ -1,8 +1,8 @@
 #include "anaglyph_export_plugin.h"
+#include "helpers.h"
 
 #include <godot_cpp/classes/dir_access.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 
 using namespace godot;
 
@@ -33,13 +33,13 @@ void AnaglyphExportPlugin::_export_end() {
 	// Godot only copies file per file, bleh.
 	Error res = copy_dir_absolute(full_source_path, full_target_path);
 	if (res != OK) {
-		UtilityFunctions::push_error("Copying Anaglyph failed: ", res, "\nTry manually copying the `Anaglyph/` directory (itself) next to the built executable.");
+		AnaglyphHelpers::print_error("Copying Anaglyph failed: ", res, "\nTry manually copying the `Anaglyph/` directory (itself) next to the built executable.");
 	}
 }
 
 Error AnaglyphExportPlugin::copy_dir_absolute(const String& source, const String& target) {
 	if (!DirAccess::dir_exists_absolute(source)) {
-		UtilityFunctions::push_error("Copying directory failed -- ", source, " does not exist.");
+		AnaglyphHelpers::print_error("Copying directory failed -- ", source, " does not exist.");
 		return ERR_FILE_NOT_FOUND;
 	}
 	Error res;
@@ -56,7 +56,7 @@ Error AnaglyphExportPlugin::copy_dir_absolute(const String& source, const String
 		String t = target + String("/") + files[i];
 		res = DirAccess::copy_absolute(s, t);
 		if (res != OK) {
-			UtilityFunctions::push_error("Could not copy file: Error ", res, "\n - Source: ", s, "\n - Target:", t);
+			AnaglyphHelpers::print_error("Could not copy file: Error ", res, "\n - Source: ", s, "\n - Target:", t);
 			return res;
 		}
 	}
@@ -75,7 +75,7 @@ Error AnaglyphExportPlugin::copy_dir_absolute(const String& source, const String
 
 Error AnaglyphExportPlugin::clear_folder_absolute(const String& target, bool mock) {
 	if (!DirAccess::dir_exists_absolute(target)) {
-		UtilityFunctions::push_error("Clearing directory failed -- ", target, " does not exist.");
+		AnaglyphHelpers::print_error("Clearing directory failed -- ", target, " does not exist.");
 		return ERR_FILE_NOT_FOUND;
 	}
 	Error res;
@@ -86,12 +86,12 @@ Error AnaglyphExportPlugin::clear_folder_absolute(const String& target, bool moc
 		if (ext == "dll" || ext == "sofa" || ext == "DS_Store") {
 			String t = target + String("/") + files[i];
 			if (mock) {
-				UtilityFunctions::print("Would've deleted file ", t);
+				AnaglyphHelpers::print("Would've deleted file ", t);
 			}
 			else {
 				res = DirAccess::remove_absolute(t);
 				if (res != OK) {
-					UtilityFunctions::push_error("Could not delete file: Error ", res, "\n - Target: ", t);
+					AnaglyphHelpers::print_error("Could not delete file: Error ", res, "\n - Target: ", t);
 					return res;
 				}
 			}
