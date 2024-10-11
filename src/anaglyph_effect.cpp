@@ -12,6 +12,11 @@ AnaglyphEffectInstance::~AnaglyphEffectInstance() { }
 void AnaglyphEffectInstance::_bind_methods() { }
 
 void AnaglyphEffectInstance::_process(const void* p_src_frames, AudioFrame* p_dst_frames, int32_t p_frame_count) {
+	// (Again, the editor sets it but it does not _necessarily_ exist.)
+	if (base->effect_data == nullptr) {
+		base->effect_data.instantiate();
+	}
+
 	// TODO: Why is this const void* and not const AudioFrame*?
 	// Assuming const AudioFrame* for now, and I'll see whether it crashes.
 	AnaglyphBridge::Process(&(base->state), (AudioFrame*)p_src_frames, p_dst_frames, (unsigned int)p_frame_count);
@@ -47,17 +52,6 @@ Ref<AudioEffectInstance> AnaglyphEffect::_instantiate() {
 	ins->base = Ref<AnaglyphEffect>(this);
 
 	return ins;
-}
-
-Ref<Resource> AnaglyphEffect::duplicate_including_anaglyph(bool p_subresources) const {
-	Ref<AnaglyphEffect> res = duplicate(p_subresources);
-	if (res->state.samplerate != 0) {
-		// If we have a sample-rate, this thing is properly instantiated and
-		// needs its anaglyph state changed as well (otherwise there is no
-		// point in duplication).
-		AnaglyphBridge::Create(&res->state);
-	}
-	return res;
 }
 
 Vector3 AnaglyphEffect::calculate_polar_position(Node3D* audio_source, Node3D* audio_listener) {
@@ -99,171 +93,272 @@ Vector3 AnaglyphEffect::calculate_polar_position(Node3D* audio_source, Node3D* a
 }
 
 void AnaglyphEffect::set_wet(const float percentage) {
-	AnaglyphBridge::SetParamScaled(&state, 18, percentage, 0, 100);
+	ensure_effect_data_exists();
+	effect_data->set_wet(percentage);
+	AnaglyphBridge::SetParamScaled(&state, 18, effect_data->get_wet(), 0, 100);
 }
 float AnaglyphEffect::get_wet() {
-	return AnaglyphBridge::GetParamScaledDirect(&state, 18, 0, 100);
+	ensure_effect_data_exists();
+	return effect_data->get_wet();
 }
 
 void AnaglyphEffect::set_gain(const float value) {
-	AnaglyphBridge::SetParamScaled(&state, 20, value, -40, 15);
+	ensure_effect_data_exists();
+	effect_data->set_gain(value);
+	AnaglyphBridge::SetParamScaled(&state, 20, effect_data->get_gain(), -40, 15);
 }
 float AnaglyphEffect::get_gain() {
-	return AnaglyphBridge::GetParamScaledDirect(&state, 20, -40, 15);
+	ensure_effect_data_exists();
+	return effect_data->get_gain();
 }
 
 void AnaglyphEffect::set_hrtf_id(const float value) {
-	AnaglyphBridge::SetParam(&state, 15, value);
+	ensure_effect_data_exists();
+	effect_data->set_hrtf_id(value);
+	AnaglyphBridge::SetParam(&state, 15, effect_data->get_hrtf_id());
 }
 float AnaglyphEffect::get_hrtf_id() {
-	return AnaglyphBridge::GetParamDirect(&state, 15);
+	ensure_effect_data_exists();
+	return effect_data->get_hrtf_id();
 }
 
 void AnaglyphEffect::set_use_custom_circumference(const bool value) {
-	AnaglyphBridge::SetParamBool(&state, 8, value);
+	ensure_effect_data_exists();
+	effect_data->set_use_custom_circumference(value);
+	AnaglyphBridge::SetParamBool(&state, 8, effect_data->get_use_custom_circumference());
 }
 bool AnaglyphEffect::get_use_custom_circumference() {
-	return AnaglyphBridge::GetParamBoolDirect(&state, 8);
+	ensure_effect_data_exists();
+	return effect_data->get_use_custom_circumference();
 }
 
 void AnaglyphEffect::set_head_circumference(const float value) {
-	AnaglyphBridge::SetParamScaled(&state, 25, value, 20, 80);
+	ensure_effect_data_exists();
+	effect_data->set_head_circumference(value);
+	AnaglyphBridge::SetParamScaled(&state, 25, effect_data->get_head_circumference(), 20, 80);
 }
 float AnaglyphEffect::get_head_circumference() {
-	return AnaglyphBridge::GetParamScaledDirect(&state, 25, 20, 80);
+	ensure_effect_data_exists();
+	return effect_data->get_head_circumference();
 }
 
 void AnaglyphEffect::set_responsiveness(const float value) {
-	AnaglyphBridge::SetParam(&state, 32, value);
+	ensure_effect_data_exists();
+	effect_data->set_responsiveness(value);
+	AnaglyphBridge::SetParam(&state, 32, effect_data->get_responsiveness());
 }
 float AnaglyphEffect::get_responsiveness() {
-	return AnaglyphBridge::GetParamDirect(&state, 32);
+	ensure_effect_data_exists();
+	return effect_data->get_responsiveness();
 }
 
 void AnaglyphEffect::set_bypass_binaural(const bool value) {
-	AnaglyphBridge::SetParamBool(&state, 4, value);
+	ensure_effect_data_exists();
+	effect_data->set_bypass_binaural(value);
+	AnaglyphBridge::SetParamBool(&state, 4, effect_data->get_bypass_binaural());
 }
 bool AnaglyphEffect::get_bypass_binaural() {
-	return AnaglyphBridge::GetParamBoolDirect(&state, 4);
+	ensure_effect_data_exists();
+	return effect_data->get_bypass_binaural();
 }
 
 void AnaglyphEffect::set_bypass_parallax(const bool value) {
-	AnaglyphBridge::SetParamBool(&state, 5, value);
+	ensure_effect_data_exists();
+	effect_data->set_bypass_parallax(value);
+	AnaglyphBridge::SetParamBool(&state, 5, effect_data->get_bypass_parallax());
 }
 bool AnaglyphEffect::get_bypass_parallax() {
-	return AnaglyphBridge::GetParamBoolDirect(&state, 5);
+	ensure_effect_data_exists();
+	return effect_data->get_bypass_parallax();
 }
 
 void AnaglyphEffect::set_bypass_shadow(const bool value) {
-	AnaglyphBridge::SetParamBool(&state, 1, value);
+	ensure_effect_data_exists();
+	effect_data->set_bypass_shadow(value);
+	AnaglyphBridge::SetParamBool(&state, 1, effect_data->get_bypass_shadow());
 }
 bool AnaglyphEffect::get_bypass_shadow() {
-	return AnaglyphBridge::GetParamBoolDirect(&state, 1);
+	ensure_effect_data_exists();
+	return effect_data->get_bypass_shadow();
 }
 
 void AnaglyphEffect::set_bypass_micro_oscillations(const bool value) {
-	AnaglyphBridge::SetParamBool(&state, 9, value);
+	ensure_effect_data_exists();
+	effect_data->set_bypass_micro_oscillations(value);
+	AnaglyphBridge::SetParamBool(&state, 9, effect_data->get_bypass_micro_oscillations());
 }
 bool AnaglyphEffect::get_bypass_micro_oscillations() {
-	return AnaglyphBridge::GetParamBoolDirect(&state, 9);
+	ensure_effect_data_exists();
+	return effect_data->get_bypass_micro_oscillations();
 }
 
 void AnaglyphEffect::set_min_attenuation(const float value) {
-	AnaglyphBridge::SetParamScaled(&state, 30, value, 0.1, 10);
-	float max = AnaglyphBridge::GetParamScaledDirect(&state, 31, 0.1, 10);
-	if (max < value) {
-		set_max_attenuation(value);
-	}
+	ensure_effect_data_exists();
+	effect_data->set_min_attenuation(value);
+	AnaglyphBridge::SetParamScaled(&state, 30, effect_data->get_min_attenuation(), 0.1, 10);
+	AnaglyphBridge::SetParamScaled(&state, 31, effect_data->get_max_attenuation(), 0.1, 10);
 }
 float AnaglyphEffect::get_min_attenuation() {
-	return AnaglyphBridge::GetParamScaledDirect(&state, 30, 0.1, 10);
+	ensure_effect_data_exists();
+	return effect_data->get_min_attenuation();
 }
 
 void AnaglyphEffect::set_max_attenuation(const float value) {
-	AnaglyphBridge::SetParamScaled(&state, 31, value, 0.1, 10);
-	float min = AnaglyphBridge::GetParamScaledDirect(&state, 30, 0.1, 10);
-	if (min > value) {
-		set_min_attenuation(value);
-	}
+	ensure_effect_data_exists();
+	effect_data->set_max_attenuation(value);
+	AnaglyphBridge::SetParamScaled(&state, 30, effect_data->get_min_attenuation(), 0.1, 10);
+	AnaglyphBridge::SetParamScaled(&state, 31, effect_data->get_max_attenuation(), 0.1, 10);
 }
 float AnaglyphEffect::get_max_attenuation() {
-	return AnaglyphBridge::GetParamScaledDirect(&state, 31, 0.1, 10);
+	ensure_effect_data_exists();
+	return effect_data->get_max_attenuation();
 }
 
 void AnaglyphEffect::set_attenuation_exponent(const float value) {
-	AnaglyphBridge::SetParamScaled(&state, 19, value, 0, 2);
+	ensure_effect_data_exists();
+	effect_data->set_attenuation_exponent(value);
+	AnaglyphBridge::SetParamScaled(&state, 19, effect_data->get_attenuation_exponent(), 0, 2);
 }
 float AnaglyphEffect::get_attenuation_exponent() {
-	return AnaglyphBridge::GetParamScaledDirect(&state, 19, 0, 2);
+	ensure_effect_data_exists();
+	return effect_data->get_attenuation_exponent();
 }
 
 void AnaglyphEffect::set_bypass_attenuation(const bool value) {
-	AnaglyphBridge::SetParamBool(&state, 3, value);
+	ensure_effect_data_exists();
+	effect_data->set_bypass_attenuation(value);
+	AnaglyphBridge::SetParamBool(&state, 3, effect_data->get_bypass_attenuation());
 }
 bool AnaglyphEffect::get_bypass_attenuation() {
-	return AnaglyphBridge::GetParamBoolDirect(&state, 3);
+	ensure_effect_data_exists();
+	return effect_data->get_bypass_attenuation();
 }
 
 void AnaglyphEffect::set_room_id(const float value) {
-	AnaglyphBridge::SetParam(&state, 16, value);
+	ensure_effect_data_exists();
+	effect_data->set_room_id(value);
+	AnaglyphBridge::SetParam(&state, 16, effect_data->get_room_id());
 }
 float AnaglyphEffect::get_room_id() {
-	return AnaglyphBridge::GetParamDirect(&state, 16);
+	ensure_effect_data_exists();
+	return effect_data->get_room_id();
 }
 
-void AnaglyphEffect::set_reverb_type(const int value) {
-	float float_value = (float)value;
-	AnaglyphBridge::SetParamScaled(&state, 13, value, 0, 3);
+void AnaglyphEffect::set_reverb_type(const AnaglyphEffectData::AnaglyphReverbType value) {
+	ensure_effect_data_exists();
+	effect_data->set_reverb_type(value);
+	AnaglyphBridge::SetParamScaled(&state, 13, (float)effect_data->get_reverb_type(), 0, 3);
 }
-int AnaglyphEffect::get_reverb_type() {
-	return (int)AnaglyphBridge::GetParamScaledDirect(&state, 13, 0, 3);
+AnaglyphEffectData::AnaglyphReverbType AnaglyphEffect::get_reverb_type() {
+	ensure_effect_data_exists();
+	return effect_data->get_reverb_type();
 }
 
 void AnaglyphEffect::set_reverb_gain(const float value) {
-	AnaglyphBridge::SetParamScaled(&state, 21, value, -40, 15);
+	ensure_effect_data_exists();
+	effect_data->set_reverb_gain(value);
+	AnaglyphBridge::SetParamScaled(&state, 21, effect_data->get_reverb_gain(), -40, 15);
 }
 float AnaglyphEffect::get_reverb_gain() {
-	return AnaglyphBridge::GetParamScaledDirect(&state, 21, -40, 15);
+	ensure_effect_data_exists();
+	return effect_data->get_reverb_gain();
 }
 
 void AnaglyphEffect::set_reverb_EQ(const Vector3 value) {
-	AnaglyphBridge::SetParamScaled(&state, 22, value.x, -40, 15);
-	AnaglyphBridge::SetParamScaled(&state, 23, value.y, -40, 15);
-	AnaglyphBridge::SetParamScaled(&state, 24, value.z, -40, 15);
+	ensure_effect_data_exists();
+	effect_data->set_reverb_EQ(value);
+	Vector3 v = effect_data->get_reverb_EQ();
+	AnaglyphBridge::SetParamScaled(&state, 22, v.x, -40, 15);
+	AnaglyphBridge::SetParamScaled(&state, 23, v.y, -40, 15);
+	AnaglyphBridge::SetParamScaled(&state, 24, v.z, -40, 15);
 }
 Vector3 AnaglyphEffect::get_reverb_EQ() {
-	float x = AnaglyphBridge::GetParamScaledDirect(&state, 22, -40, 15);
-	float y = AnaglyphBridge::GetParamScaledDirect(&state, 23, -40, 15);
-	float z = AnaglyphBridge::GetParamScaledDirect(&state, 24, -40, 15);
-	return Vector3(x, y, z);
+	ensure_effect_data_exists();
+	return effect_data->get_reverb_EQ();
 }
 
 void AnaglyphEffect::set_bypass_reverb(const bool value) {
-	AnaglyphBridge::SetParamBool(&state, 6, value);
+	ensure_effect_data_exists();
+	effect_data->set_bypass_reverb(value);
+	AnaglyphBridge::SetParamBool(&state, 6, effect_data->get_bypass_reverb());
 }
 bool AnaglyphEffect::get_bypass_reverb() {
-	return AnaglyphBridge::GetParamBoolDirect(&state, 6);
+	ensure_effect_data_exists();
+	return effect_data->get_bypass_reverb();
 }
 
 void AnaglyphEffect::set_azimuth(const float value) {
-	AnaglyphBridge::SetParamScaled(&state, 27, fmodf(value + 180, 360) - 180, -180, 180);
+	ensure_effect_data_exists();
+	effect_data->set_azimuth(value);
+	AnaglyphBridge::SetParamScaled(&state, 27, effect_data->get_azimuth(), -180, 180);
 }
 float AnaglyphEffect::get_azimuth() {
-	return AnaglyphBridge::GetParamScaledDirect(&state, 27, -180, 180);
+	ensure_effect_data_exists();
+	return effect_data->get_azimuth();
 }
 
 void AnaglyphEffect::set_elevation(const float value) {
-	AnaglyphBridge::SetParamScaled(&state, 26, value, -90, 90);
+	ensure_effect_data_exists();
+	effect_data->set_elevation(value);
+	AnaglyphBridge::SetParamScaled(&state, 26, effect_data->get_elevation(), -90, 90);
 }
 float AnaglyphEffect::get_elevation() {
-	return AnaglyphBridge::GetParamScaledDirect(&state, 26, -90, 90);
+	ensure_effect_data_exists();
+	return effect_data->get_elevation();
 }
 
 void AnaglyphEffect::set_distance(const float value) {
-	AnaglyphBridge::SetParamScaled(&state, 28, value, 0.1, 10);
+	ensure_effect_data_exists();
+	effect_data->set_distance(value);
+	AnaglyphBridge::SetParamScaled(&state, 28, effect_data->get_distance(), 0.1, 10);
 }
 float AnaglyphEffect::get_distance() {
-	return AnaglyphBridge::GetParamScaledDirect(&state, 28, 0.1, 10);
+	ensure_effect_data_exists();
+	return effect_data->get_distance();
+}
+
+void AnaglyphEffect::ensure_effect_data_exists() {
+	if (effect_data == nullptr) {
+		Ref<AnaglyphEffectData> data = Ref<AnaglyphEffectData>{};
+		data.instantiate();
+		set_effect_data(data);
+	}
+}
+
+void AnaglyphEffect::set_effect_data(Ref<AnaglyphEffectData> data) {
+	if (data == nullptr) {
+		UtilityFunctions::push_warning("Tried to `AnaglyphEffect.set_effect_data(null)`. This is not allowed; ignoring the call.");
+		return;
+	}
+	effect_data = data->duplicate();
+	// hoo boyoboy time for this list again *again*
+	set_wet(get_wet());
+	set_gain(get_gain());
+
+	set_hrtf_id(get_hrtf_id());
+	set_use_custom_circumference(get_use_custom_circumference());
+	set_head_circumference(get_head_circumference());
+	set_responsiveness(get_responsiveness());
+	set_bypass_binaural(get_bypass_binaural());
+
+	set_bypass_parallax(get_bypass_parallax());
+	set_bypass_shadow(get_bypass_shadow());
+	set_bypass_micro_oscillations(get_bypass_micro_oscillations());
+
+	set_min_attenuation(get_min_attenuation());
+	set_max_attenuation(get_max_attenuation());
+	set_attenuation_exponent(get_attenuation_exponent());
+	set_bypass_attenuation(get_bypass_attenuation());
+
+	set_room_id(get_room_id());
+	set_reverb_type(get_reverb_type());
+	set_reverb_gain(get_reverb_gain());
+	set_reverb_EQ(get_reverb_EQ());
+	set_bypass_reverb(get_bypass_reverb());
+
+	set_azimuth(get_azimuth());
+	set_elevation(get_elevation());
+	set_distance(get_distance());
 }
 
 void AnaglyphEffect::_bind_methods() {

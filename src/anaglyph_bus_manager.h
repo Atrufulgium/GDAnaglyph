@@ -55,7 +55,13 @@ namespace godot {
 		// Tries to get a free anaglyph'd bus, which gets its output rerouted
 		// into the base bus.
 		// If there is no free bus, directly returns the base bus.
-		StringName borrow_anaglyph_bus(const StringName& base_bus, const Ref<AnaglyphEffect>& anaglyph_data);
+		// If an Anaglyph bus is returned, out_effect will be set to the bus's
+		// effect. Otherwise, it will be set to nullptr.
+		StringName borrow_anaglyph_bus(
+			const StringName& base_bus,
+			const Ref<AnaglyphEffectData>& anaglyph_data,
+			Ref<AnaglyphEffect>& out_effect
+		);
 		// Once you're done with a bus, return it.
 		// This does not do any validation.
 		void return_anaglyph_bus(const StringName& anaglyph_bus);

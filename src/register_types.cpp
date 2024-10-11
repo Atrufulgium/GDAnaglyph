@@ -20,9 +20,10 @@ void initialize_gdanaglyph_module(ModuleInitializationLevel p_level) {
 		EditorPlugins::add_by_type<AnaglyphPlugin>();
 	}
 	else if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
-		GDREGISTER_CLASS(AudioStreamPlayerAnaglyph);
+		GDREGISTER_CLASS(AnaglyphEffectData);
 		GDREGISTER_CLASS(AnaglyphEffect);
 		GDREGISTER_CLASS(AnaglyphEffectInstance);
+		GDREGISTER_CLASS(AudioStreamPlayerAnaglyph);
 
 		// Might as well load the dll at the start.
 		// Note that we won't unload the dll at any point. Let it be cleaned up

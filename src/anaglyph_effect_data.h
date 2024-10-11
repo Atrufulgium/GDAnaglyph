@@ -1,74 +1,69 @@
-#ifndef GDANAGLYPH
-#define GDANAGLYPH
+#ifndef GDANAGLYPH_EFFECT_DATA
+#define GDANAGLYPH_EFFECT_DATA
 
-#include "AudioPluginInterface.h"
-#include "anaglyph_effect_data.h"
-#include "register_macro.h"
-
-#include <godot_cpp/classes/audio_effect.hpp>
-#include <godot_cpp/classes/audio_effect_instance.hpp>
-#include <godot_cpp/classes/audio_frame.hpp>
-#include <godot_cpp/classes/node3d.hpp>
+#include <godot_cpp/classes/resource.hpp>
+#include <godot_cpp/classes/wrapped.hpp>
 #include <godot_cpp/variant/vector3.hpp>
 
 namespace godot {
 
-	class AnaglyphEffect;
+	// I don't like that I need to do this, but I need to capture "anaglyph
+	// states are bound to buses, while the effect data can be passed freely
+	// from/to where-ever" somehow. Yet I still want AnaglyphEffect to have
+	// getters and setters (as only having a method that updates *all* data
+	// inside anaglyph feels off).
+	// So massive code duplication it is.
+	// Fortunately, Anaglyph is stable, so I won't have to update both places
+	// often.
 
-	class AnaglyphEffectInstance : public AudioEffectInstance {
-		GDCLASS(AnaglyphEffectInstance, AudioEffectInstance);
-		friend class AnaglyphEffect;
+	// This represents parameters of an AnaglyphEffect, that may not necessarily
+	// be synchronised to an instance inside Anaglyph's dll.
+	class AnaglyphEffectData : public Resource {
+		GDCLASS(AnaglyphEffectData, Resource);
 
-		Ref<AnaglyphEffect> base;
+	public:
+		enum AnaglyphReverbType {
+			ANAGLYPH_REVERB_OMNI = 0,
+			ANAGLYPH_REVERB_2D = 1,
+			ANAGLYPH_REVERB_3D_1 = 2,
+			ANAGLYPH_REVERB_3D_2 = 3
+		};
+
+	private:
+		float wet;
+		float gain;
+
+		float hrtf_id;
+		bool use_custom_circumference;
+		float head_circumference;
+		float responsiveness;
+		bool bypass_binaural;
+		
+		bool bypass_parallax;
+		bool bypass_shadow;
+		bool bypass_micro_oscillations;
+		
+		float min_attenuation;
+		float max_attenuation;
+		float attenuation_exponent;
+		bool bypass_attenuation;
+		
+		float room_id;
+		AnaglyphReverbType reverb_type;
+		float reverb_gain;
+		Vector3 reverb_EQ;
+		bool bypass_reverb;
+		
+		float azimuth;
+		float elevation;
+		float distance;
 
 	protected:
 		static void _bind_methods();
 
 	public:
-		AnaglyphEffectInstance();
-		~AnaglyphEffectInstance();
-
-		// (really AudioFrame* p_src_frames)
-
-		// From the Godot docs:
-		// Called by the AudioServer to process this effect. When
-		// `_process_silence` is not overridden or it returns false,
-		// this method is called only when the bus is active.
-		void _process(const void* p_src_frames, AudioFrame* p_dst_frames, int32_t p_frame_count) override;
-		bool _process_silence() const override;
-	};
-
-	class AnaglyphEffect : public AudioEffect {
-		GDCLASS(AnaglyphEffect, AudioEffect);
-		friend class AnaglyphEffectInstance;
-
-		UnityAudioEffectState state;
-		Ref<AnaglyphEffectData> effect_data;
-
-		void ensure_effect_data_exists();
-
-	protected:
-		static void _bind_methods();
-
-	public:
-		AnaglyphEffect();
-		~AnaglyphEffect();
-
-		Ref<AudioEffectInstance> _instantiate() override;
-		// So, this stupid `duplicate` method is virtual in the engine itself,
-		// but not in the cpp bindings? What's that about.
-		Ref<Resource> duplicate_including_anaglyph(bool p_subresources = false) const;
-
-		// Returns in the Vector3 the azimuth [x], elevation [y], and distance [z]
-		// so that their respective getters/setters can use them.
-		static Vector3 calculate_polar_position(Node3D* audio_source, Node3D* audio_listener);
-
-		// Sets all effect data and sends it to Anaglyph.
-		void set_effect_data(Ref<AnaglyphEffectData> data);
-
-		// Below are the same properties as in anaglyph_effect_data.h,
-		// re-exposed. The difference is that these don't just set the data
-		// internally, but also send the data to Anaglyph.
+		AnaglyphEffectData();
+		~AnaglyphEffectData();
 
 		// ======================
 		// === The usual ones ===
@@ -87,7 +82,7 @@ namespace godot {
 		// HRTF ID, unfortunately as of yet a float [0,1].
 		void set_hrtf_id(const float id);
 		float get_hrtf_id();
-		
+
 		// Whether to use custom head circumference
 		void set_use_custom_circumference(const bool value);
 		bool get_use_custom_circumference();
@@ -148,8 +143,8 @@ namespace godot {
 		float get_room_id();
 
 		// Reverb type, one of "OMNI" (0), "2D" (1), "3D 1st" (2), "3D 2nd" (3).
-		void set_reverb_type(const AnaglyphEffectData::AnaglyphReverbType type);
-		AnaglyphEffectData::AnaglyphReverbType get_reverb_type();
+		void set_reverb_type(const AnaglyphReverbType type);
+		AnaglyphReverbType get_reverb_type();
 
 		// Reverb gain, as dB [-40,15].
 		void set_reverb_gain(const float dB);
@@ -177,18 +172,10 @@ namespace godot {
 		// Distance, in meters [0.1,10].
 		void set_distance(const float meters);
 		float get_distance();
-
-		// Not exposing/implementing the following:
-		// 00 - Bypass                - Unnecessary as Godot also has one.
-		// 02 - Bypass ITD            - Not exposed in the VST either.
-		// 07 - Reverb Only           - Seems superfluous with bypass hrtf.
-		// 10 - Bypass Interpolation  - Disables IR crossfade. Exposed in VST, but seems somewhat to complex a usecase for end-users.
-		// 11 - Bypass Doppler        - Not exposed in the VST either.
-		// 12 - Bypass Air Absorbance - Not exposed in the VST either.
-		// 14 - View ID               - VST camera property, irrelevant.
-		// 17 - Channel Mapping       - I don't see the use for anything but stereo to mono.
-		// 29 - Zoom				  - VST camera property, irrelevant.
 	};
+
 }
 
-#endif //GDANAGLYPH
+VARIANT_ENUM_CAST(AnaglyphEffectData::AnaglyphReverbType);
+
+#endif // GDANAGLYPH_EFFECT_DATA

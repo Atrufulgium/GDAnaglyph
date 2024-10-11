@@ -132,16 +132,14 @@ void AudioStreamPlayerAnaglyph::_ready() {
 		return;
 	}
 
-	// Duplicate resources are a *mess* that you'd not ever want.
-	// (Both audio gets send to the same Anaglyph instance so you get artifacts,
-	//  only one of their positional settings is applied, etc etc.)
-	// OTOH, it's *really* easy to accidentally introduce duplicates by just
-	// copying over a node or resource, either in-editor or at runtime.
-	// So prevent duplication by being... uhh... expensive.
+	// Duplicate resources create the problem of "only one position gets set, and
+	// other users' positions get ignored". To protect users, have a toggle that
+	// defaults to true that prevents this by copying the params when actually
+	// starting.
 	// The downside is that doing this prevents playing around with sound
 	// settings while playing. So allow a toggle to disable this protection.
 	if (dupe_protection) {
-		anaglyph_state = anaglyph_state->duplicate_including_anaglyph();
+		anaglyph_data = anaglyph_data->duplicate();
 	}
 
 	// (The two child players should at all times be synced)
@@ -161,7 +159,7 @@ void AudioStreamPlayerAnaglyph::_process(double delta) {
 
 	// If the tree is not setup properly, don't do anything.
 	Players players = Players{};
-	if (!get_players(players) || audio_stream == nullptr || anaglyph_state == nullptr) {
+	if (!get_players(players) || audio_stream == nullptr || anaglyph_data == nullptr) {
 		return;
 	}
 
@@ -188,6 +186,10 @@ void AudioStreamPlayerAnaglyph::_process(double delta) {
 		use_anaglyph = false;
 	}
 
+	// In *very* rare cases where I *really* hate users, this *might* happen.
+	// You'd have to ignore pretty much every warning in the documentation thuohg.
+	use_anaglyph &= borrowed_effect != nullptr;
+
 	// To ensure both are synced in playback, we don't remove the node from the
 	// tree or anything, we just send the inactive node's audio to a muted bus.
 	// TODO: Only update buses if use_anaglyph changes. Dunno how expensive the
@@ -195,9 +197,9 @@ void AudioStreamPlayerAnaglyph::_process(double delta) {
 	StringName anaglyph_bus = borrowed_bus;
 	StringName silent_bus = AnaglyphBusManager::get_singleton()->get_silent_bus();
 	if (use_anaglyph) {
-		anaglyph_state->set_azimuth(polar.x);
-		anaglyph_state->set_elevation(polar.y);
-		anaglyph_state->set_distance(polar.z);
+		borrowed_effect->set_azimuth(polar.x);
+		borrowed_effect->set_elevation(polar.y);
+		borrowed_effect->set_distance(polar.z);
 		runtime_players.anaglyph->set_bus(anaglyph_bus);
 		runtime_players.fallback->set_bus(silent_bus);
 	}
@@ -410,13 +412,12 @@ AudioStreamPlayerAnaglyph::ForceStream AudioStreamPlayerAnaglyph::get_forcing() 
 	return forcing;
 }
 
-void AudioStreamPlayerAnaglyph::set_anaglyph_state(Ref<AnaglyphEffect> p_anaglyph_state) {
-	anaglyph_state = p_anaglyph_state;
-	copy_shared_properties();
+void AudioStreamPlayerAnaglyph::set_anaglyph_data(Ref<AnaglyphEffectData> p_anaglyph_data) {
+	anaglyph_data = p_anaglyph_data;
 }
 
-Ref<AnaglyphEffect> AudioStreamPlayerAnaglyph::get_anaglyph_state() const {
-	return anaglyph_state;
+Ref<AnaglyphEffectData> AudioStreamPlayerAnaglyph::get_anaglyph_data() const {
+	return anaglyph_data;
 }
 
 void AudioStreamPlayerAnaglyph::set_dupe_protection(const bool protect) {
@@ -461,7 +462,7 @@ void AudioStreamPlayerAnaglyph::play_oneshot(
 	Ref<AudioStream> stream,
 	Vector3 global_position,
 	float volume_db,
-	Ref<AnaglyphEffect> anaglyph_settings,
+	Ref<AnaglyphEffectData> anaglyph_settings,
 	StringName bus
 ) {
 	if (Engine::get_singleton()->is_editor_hint()) {
@@ -488,10 +489,12 @@ void AudioStreamPlayerAnaglyph::play_oneshot(
 
 	AudioStreamPlayerAnaglyph* node = memnew(AudioStreamPlayerAnaglyph);
 	if (anaglyph_settings == nullptr) {
-		node->set_anaglyph_state(memnew(AnaglyphEffect));
+		Ref<AnaglyphEffectData> default_data;
+		default_data.instantiate();
+		node->set_anaglyph_data(default_data);
 	}
 	else {
-		node->set_anaglyph_state(anaglyph_settings->duplicate_including_anaglyph());
+		node->set_anaglyph_data(anaglyph_settings->duplicate());
 	}
 	node->set_dupe_protection(false);
 	node->set_delete_on_finish(true);
@@ -523,10 +526,10 @@ void AudioStreamPlayerAnaglyph::_bind_methods() {
 	ADD_GROUP("Anaglyph settings", "");
 	REGISTER(FLOAT, max_anaglyph_range, AudioStreamPlayerAnaglyph, "max_anaglyph_range", PROPERTY_HINT_RANGE, "0,10,0.01,suffix:m");
 	REGISTER(INT, forcing, AudioStreamPlayerAnaglyph, "forcing", PROPERTY_HINT_ENUM, "None,Anaglyph On,Anaglyph Off");
-	REGISTER_USAGE(OBJECT, anaglyph_state, AudioStreamPlayerAnaglyph, "anaglyph_state", PROPERTY_HINT_RESOURCE_TYPE, "AnaglyphEffect", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_EDITOR_INSTANTIATE_OBJECT);
+	REGISTER_USAGE(OBJECT, anaglyph_data, AudioStreamPlayerAnaglyph, "anaglyph_data", PROPERTY_HINT_RESOURCE_TYPE, "AnaglyphEffectData", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_EDITOR_INSTANTIATE_OBJECT);
 
 	ADD_GROUP("Misc settings", "");
-	REGISTER(BOOL, dupe_protection, AudioStreamPlayerAnaglyph, "duplication_protection", PROPERTY_HINT_NONE, "");
+	REGISTER(BOOL, dupe_protection, AudioStreamPlayerAnaglyph, "dupe_protection", PROPERTY_HINT_NONE, "");
 	REGISTER(BOOL, delete_on_finish, AudioStreamPlayerAnaglyph, "delete_on_finish", PROPERTY_HINT_NONE, "");
 
 	BIND_ENUM_CONSTANT(FORCE_NONE);
@@ -576,7 +579,7 @@ void AudioStreamPlayerAnaglyph::borrow_anaglyph() {
 	if (!borrowed_bus.is_empty()) {
 		return_anaglyph();
 	}
-	borrowed_bus = AnaglyphBusManager::get_singleton()->borrow_anaglyph_bus(user_bus, anaglyph_state);
+	borrowed_bus = AnaglyphBusManager::get_singleton()->borrow_anaglyph_bus(user_bus, anaglyph_data, borrowed_effect);
 }
 
 void AudioStreamPlayerAnaglyph::return_anaglyph() {
@@ -584,6 +587,7 @@ void AudioStreamPlayerAnaglyph::return_anaglyph() {
 		AnaglyphBusManager::get_singleton()->return_anaglyph_bus(borrowed_bus);
 	}
 	borrowed_bus = "";
+	borrowed_effect = Ref<AnaglyphEffect>(nullptr);
 }
 
 void AudioStreamPlayerAnaglyph::finish_signal() {

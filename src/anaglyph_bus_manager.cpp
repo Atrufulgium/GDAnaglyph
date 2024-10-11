@@ -99,7 +99,11 @@ void AnaglyphBusManager::prepare_anaglyph_buses(int count) {
 	}
 }
 
-StringName AnaglyphBusManager::borrow_anaglyph_bus(const StringName& base_bus, const Ref<AnaglyphEffect>& anaglyph_data) {
+StringName AnaglyphBusManager::borrow_anaglyph_bus(
+	const StringName& base_bus,
+	const Ref<AnaglyphEffectData>& anaglyph_data,
+	Ref<AnaglyphEffect> &out_effect
+) {
 	// Grab or create a bus.
 	// Grabbing may fail if AudioServer::set_bus_layout did a thing.
 	StringName name;
@@ -128,6 +132,7 @@ StringName AnaglyphBusManager::borrow_anaglyph_bus(const StringName& base_bus, c
 			index = get_bus_index(name);
 		}
 		else {
+			out_effect = Ref<AnaglyphEffect>(nullptr);
 			return base_bus;
 		}
 	}
@@ -137,10 +142,20 @@ StringName AnaglyphBusManager::borrow_anaglyph_bus(const StringName& base_bus, c
 
 	// Set the anaglyph data.
 	if (audio->get_bus_effect_count(index) == 0) {
-		audio->add_bus_effect(index, anaglyph_data);
+		Ref<AnaglyphEffect> effect = memnew(AnaglyphEffect);
+		effect->set_effect_data(anaglyph_data);
+		audio->add_bus_effect(index, effect);
+		out_effect = effect;
 	}
 	else {
-		audio->get_bus_effect(index, 0) = anaglyph_data;
+		Ref<AnaglyphEffect> effect = audio->get_bus_effect(index, 0);
+		if (effect == nullptr) {
+			UtilityFunctions::push_error("Internal Anaglyph busses have been messed with... Uhh... Don't do that.");
+		}
+		else {
+			effect->set_effect_data(anaglyph_data);
+		}
+		out_effect = effect;
 	}
 
 	// Reroute it into the base bus

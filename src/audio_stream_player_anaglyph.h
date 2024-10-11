@@ -47,6 +47,8 @@ namespace godot {
 		// buses run out. After returning a borrow, this should be reset to the
 		// empty string.
 		StringName borrowed_bus;
+		// Synchronised with the above `borrowed_bus`, in order to set effect data.
+		Ref<AnaglyphEffect> borrowed_effect;
 
 		Ref<AudioStream> audio_stream;
 		float volume;
@@ -58,7 +60,7 @@ namespace godot {
 		
 		float max_anaglyph_range;
 		ForceStream forcing;
-		Ref<AnaglyphEffect> anaglyph_state;
+		Ref<AnaglyphEffectData> anaglyph_data;
 
 		bool dupe_protection;
 		bool delete_on_finish;
@@ -132,8 +134,8 @@ namespace godot {
 		void set_forcing(ForceStream forcing);
 		ForceStream get_forcing() const;
 
-		void set_anaglyph_state(Ref<AnaglyphEffect> anaglyph_state);
-		Ref<AnaglyphEffect> get_anaglyph_state() const;
+		void set_anaglyph_data(Ref<AnaglyphEffectData> anaglyph_data);
+		Ref<AnaglyphEffectData> get_anaglyph_data() const;
 
 		// Misc
 		void set_dupe_protection(const bool protect);
@@ -159,7 +161,7 @@ namespace godot {
 			Ref<AudioStream> stream,
 			Vector3 global_position,
 			float volume_db = 0,
-			Ref<AnaglyphEffect> anaglyph_settings = nullptr,
+			Ref<AnaglyphEffectData> anaglyph_settings = nullptr,
 			StringName bus = "Master"
 		);
 	};
