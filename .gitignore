@@ -59,3 +59,4 @@ mono_crash.*.json
 *.exe
 *.out
 *.app
+src/gen/doc_data.gen.cpp

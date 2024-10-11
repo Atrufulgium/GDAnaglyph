@@ -446,4 +446,7 @@ void AnaglyphEffect::_bind_methods() {
 	REGISTER(FLOAT, azimuth, AnaglyphEffect, "angle", PROPERTY_HINT_RANGE, "-180,180,0.1,or_greater,or_less,degrees");
 	REGISTER(FLOAT, elevation, AnaglyphEffect, "angle", PROPERTY_HINT_RANGE, "-90,90,0.1,degrees");
 	REGISTER(FLOAT, distance, AnaglyphEffect, "meters", PROPERTY_HINT_RANGE, "0.1,10,0.1,suffix:m");
+
+	// Steal the helper method into this class.
+	ClassDB::bind_static_method("AnaglyphEffect", D_METHOD("calculate_polar_position", "source", "listener"), &AnaglyphHelpers::calculate_polar_position);
 }

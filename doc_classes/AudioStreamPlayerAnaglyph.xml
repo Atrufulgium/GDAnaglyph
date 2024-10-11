@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="AudioStreamPlayerAnaglyph" inherits="Node3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	A node that allows for binaural audio instead of just 3D audio.
+	</brief_description>
+	<description>
+	Plays audio in 3D, based on the position of the camera. Unlike a regular [AudioStreamPlayer3D], this player is tailored for users wearing ear- or headphones, which allows for achieve higher realism.
+	When you add an AudioStreamPlayerAnaglyph to the scene, it will come with two children. The first child is an [AudioStreamPlayer] that will be used for the binaural audio. The second child is an [AudioStreamPlayer3D] that will be used as fallback when binaural audio is disabled.
+	[b]Note:[/b] Both nodes are necessary. The fallback will be used when the camera is too far away (see [member max_anaglyph_range]), or when resources run out (see [method set_max_anaglyph_buses]). The user should also be able to disable binaural audio when not wearing headphones, or when they otherwise wish it (see [method set_anaglyph_enabled]).
+	The basic usage of an AudioStreamPlayerAnaglyph is the same as a regular [AudioStreamPlayer] or [AudioStreamPlayer3D]. In the inspector, in the "Shared stream settings" section, you can set the [AudioStream] to be played, and some other properties, such as the [member bus] used, or whether to [member autoplay] this stream.
+	Beyond this are the specialized settings. In the "Anaglyph settings" section, you can customize the binaural sound. In particular, you can set an [AnaglyphEffectData], which defines all properties the resulting [AnaglyphEffect] will have.
+	Both children also have settings specific to them. For instance, the fallback child has various settings to do with attenuation. See the documentation pages for [AudioStreamPlayer] and [AudioStreamPlayer3D] for more specifics.
+	[b]Warning:[/b] Do not modify the properties of the children that can also be found in the "Shared stream settings" section. These shared stream settings will overwrite the childrens' properties.
+	[b]Warning:[/b] Do not remove this node from the tree without pausing (see [method set_stream_paused]) or calling [method stop]. Otherwise, it will keep using one of your valuable few available [AnaglyphEffect]s, without making it available to other sounds.
+	[b]Warning:[/b] Unlike [AudioStreamPlayer3D], the binaural processing does [i]not[/i] support [AudioListener3D]. Please do not use AudioStreamPlayerAnaglyph and [AudioListener3D] nodes in the same scene.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_anaglyph_enabled" qualifiers="static">
+			<return type="bool" />
+			<description>
+			If [code]false[/code], binaural processing of all AudioStreamPlayerAnaglyph nodes is disabled. Even if [code]true[/code], some AudioStreamPlayerAnaglyphs may still use the fallback.
+			[b]Warning:[/b] This does not affect [AnaglyphEffect]s that have been added manually.
+			</description>
+		</method>
+		<method name="get_max_anaglyph_buses" qualifiers="static">
+			<return type="int" />
+			<description>
+			The maximum number of AudioStreamPlayerAnaglyphs that may play binaural audio simultaneously, before the fallback is used.
+			Binaural processing is much heavier than regular processing. A good rule of thumb is to assume 2ms per [AnaglyphEffect] per frame.
+			The default value is [code]4[/code].
+			</description>
+		</method>
+		<method name="get_playback_position" qualifiers="const">
+			<return type="float" />
+			<description>
+			Returns the position in the [AudioStream].
+			</description>
+		</method>
+		<method name="play">
+			<return type="void" />
+			<param index="0" name="from_position" type="float" default="0.0" />
+			<description>
+			Queues the audio to play on the next physics frame, from the given position [code]from_position[/code], in seconds.
+			[b]Note:[/b] This does nothing during editing. If you want to test how something sounds, either try the children, or run your game.
+			</description>
+		</method>
+		<method name="play_oneshot" qualifiers="static">
+			<return type="void" />
+			<param index="0" name="audio_stream" type="AudioStream" />
+			<param index="1" name="global_position" type="Vector3" />
+			<param index="2" name="volume_db" type="float" default="0.0" />
+			<param index="3" name="anaglyph_settings" type="AnaglyphEffectData" default="null" />
+			<param index="4" name="bus" type="StringName" default="&quot;Master&quot;" />
+			<description>
+			Plays a given [AudioStream] at some position in the world.
+			You can optionally specify the volume (in dB), what binaural settings to use, and what bus to send the data to.
+			If [code]anaglyph_settings[/code] is [code]null[/code], default settings are used. See [AnaglyphEffectData] for more info about these defaults.
+			[b]Warning:[/b] It is mostly recommended to use this method for quick iteration. Apart from limitations such as for instance not being able to spawn moving AudioStreamPlayerAnaglyphs, there are [url=https://docs.godotengine.org/en/stable/tutorials/best_practices/autoloads_versus_internal_nodes.html#the-cutting-audio-issue]other valid reasons why methods like this should be used sparingly[/url]. Instead, I recommend creating bespoke AudioStreamPlayerAnaglyph scenes with the behaviour you want, and instantiate these scenes when you need them.
+			</description>
+		</method>
+		<method name="prepare_anaglyph_buses" qualifiers="static">
+			<return type="void" />
+			<param index="0" name="count" type="int" />
+			<description>
+			A small amount of preparation (typically about one second) is needed before an [AnaglyphEffect] can properly produce binaural audio. Before this preparation, the effect plays as if [member AnaglyphEffect.wet] is set to [code]0[/code]%.
+			The transition from this non-binaural audio to binaural audio may be jarring. To prevent this, you can create prepared buses in advance.
+			This method adds an additional [code]count[/code] buses (up until [member get_max_anaglyph_buses] is reached) that will be ready to produce binaural audio.
+			</description>
+		</method>
+		<method name="seek">
+			<return type="void" />
+			<param index="0" name="to_position" type="float" />
+			<description>
+			Sets the position from which audio will be played, in seconds.
+			</description>
+		</method>
+		<method name="set_anaglyph_enabled" qualifiers="static">
+			<return type="void" />
+			<param index="0" name="anaglyph_enabled" type="bool" />
+			<description>
+			If [code]false[/code], binaural processing of all AudioStreamPlayerAnaglyph nodes is disabled. Even if [code]true[/code], some AudioStreamPlayerAnaglyphs may still use the fallback.
+			[b]Warning:[/b] This does not affect [AnaglyphEffect]s that have been added manually.
+			<!-- This description is the same as method get_anaglyph_enabled. -->
+			</description>
+		</method>
+		<method name="set_max_anaglyph_buses" qualifiers="static">
+			<return type="void" />
+			<param index="0" name="count" type="int" />
+			<description>
+			The maximum number of AudioStreamPlayerAnaglyphs that may play binaural audio simultaneously, before the fallback is used.
+			Binaural processing is much heavier than regular processing. A good rule of thumb is to assume 2ms per [AnaglyphEffect] per frame.
+			The default value is [code]4[/code].
+			<!-- This description is the same as method get_max_anaglyph_buses. -->
+			</description>
+		</method>
+		<method name="stop">
+			<return type="void" />
+			<description>
+			Stops the audio.
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="anaglyph_data" type="AnaglyphEffectData" setter="set_anaglyph_data" getter="get_anaglyph_data">
+		The binaural settings to use for this player. See [AnaglyphEffectData] for more info on each of these properties.
+		[b]Note:[/b] By default, these values will be copied over on play. This means that later changes will not be reflected in the audio. To change this behaviour, see [member dupe_protection].
+		</member>
+		<member name="autoplay" type="bool" setter="set_autoplay" getter="get_autoplay" default="false">
+		If [code]true[/code], audio plays when the AudioStreamPlayerAnaglyph is added to the scene tree.
+		</member>
+		<member name="bus" type="StringName" setter="set_bus" getter="get_bus" default="&amp;&quot;Master&quot;">
+		The bus on which this audio is playing.
+		[b]Note:[/b] At runtime, if this bus does not exist, it will fall back to [code]"Master"[/code].
+		[b]Warning:[/b] At runtime, the children's buses will change every now and then. To change the bus used, only set this property, and not the [member AudioStreamPlayer.bus] or [member AudioStreamPlayer3D.bus] properties on the children.
+		</member>
+		<member name="delete_on_finish" type="bool" setter="set_delete_on_finish" getter="get_delete_on_finish" default="false">
+		If [code]true[/code], deletes this node some time after the [signal finished] signal has been emitted.
+		</member>
+		<member name="dupe_protection" type="bool" setter="set_dupe_protection" getter="get_dupe_protection" default="true">
+		If [code]true[/code], changing the settings of [member anaglyph_data] will not update the audio.
+		If [code]false[/code], these changes will update the audio.
+		[b]Warning:[/b] If multiple AudioStreamPlayerAnaglyphs use the same [AnaglyphEffectData], only one of them will sound correct. If this is set to [code]false[/code], and you duplicate a node, ensure the duplicate's [member anaglyph_data] is made unique. (This can be achieved by right-clicking the resource in the inspector, and clicking "Make Unique".)
+		</member>
+		<member name="forcing" type="int" setter="set_forcing" getter="get_forcing" enum="AudioStreamPlayerAnaglyph.ForceStream" default="0">
+		Whether to ignore various settings and force the binaural audio to be either on or off.
+		The [method set_anaglyph_enabled] setting takes precedence over this setting.
+		</member>
+		<member name="gain_reduction_fallback_db" type="float" setter="set_gain_reduction_fallback_db" getter="get_gain_reduction_fallback_db" default="6.0">
+		By how many dB to additionally reduce the volume of the fallback [AudioStreamPlayer3D].
+		</member>
+		<member name="max_anaglyph_range" type="float" setter="set_max_anaglyph_range" getter="get_max_anaglyph_range" default="10.0">
+		The range, in meters, after which this player switches to the fallback.
+		[b]Note:[/b] Anaglyph's attenuation is capped out at 10 meters. This value may be even lower if set in [member anaglyph_data].
+		</member>
+		<member name="pitch_scale" type="float" setter="set_pitch_scale" getter="get_pitch_scale" default="1.0">
+		The audio's pitch and tempo, as a multiplier of the [AudioStream]'s sample rate. A value of [code]2.0[/code] doubles the pitch and halves the duration, while a value of [code]0.5[/code] halves the pitch and doubles the duration.
+		</member>
+		<member name="playing" type="bool" setter="set_playing" getter="is_playing" default="false">
+		If [code]true[/code], this node is playing sounds. Setting this property has the same effect as [method play] and [method stop].
+		[b]Note:[/b] This does nothing during editing. If you want to test how something sounds, either try the children, or run your game.
+		</member>
+		<member name="stream" type="AudioStream" setter="set_stream" getter="get_stream">
+		The [AudioStream] resource to be played. Setting this property stops the currently playing sounds.
+		</member>
+		<member name="stream_paused" type="bool" setter="set_stream_paused" getter="get_stream_paused" default="true">
+		If [code]true[/code], the playback is paused. You can resume it by setting [stream_paused] to [code]false[/code] again.
+		</member>
+		<member name="volume_db" type="float" setter="set_volume_db" getter="get_volume_db" default="0.0">
+		The base volume of the sound, in decibel.
+		The binaural player's volume is additionally influenced by [member AnaglyphEffect.gain].
+		The fallback player's volume is additionally influenced by [member gain_reduction_fallback_db] and its attenuation settings. See [AudioStreamPlayer3D] for more info.
+		</member>
+	</members>
+	<signals>
+		<signal name="finished">
+			<description>
+			Emitted when a sound finishes playing without interruptions. This signal is [i]not[/i] emitted when calling [method stop], or when exiting the tree while sounds are playing.
+			</description>
+		</signal>
+	</signals>
+	<constants>
+		<constant name="FORCE_NONE" value="0" enum="ForceStream">
+		</constant>
+		<constant name="FORCE_ANAGLYPH_ON" value="1" enum="ForceStream">
+		</constant>
+		<constant name="FORCE_ANAGLYPH_OFF" value="2" enum="ForceStream">
+		</constant>
+	</constants>
+</class>

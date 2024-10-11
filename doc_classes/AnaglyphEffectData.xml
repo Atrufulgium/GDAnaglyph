@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="AnaglyphEffectData" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="attenuation_exponent" type="float" setter="set_attenuation_exponent" getter="get_attenuation_exponent" default="1.0">
+		</member>
+		<member name="azimuth" type="float" setter="set_azimuth" getter="get_azimuth" default="0.0">
+		</member>
+		<member name="bypass_attenuation" type="bool" setter="set_bypass_attenuation" getter="get_bypass_attenuation" default="false">
+		</member>
+		<member name="bypass_binaural" type="bool" setter="set_bypass_binaural" getter="get_bypass_binaural" default="false">
+		</member>
+		<member name="bypass_micro_oscillations" type="bool" setter="set_bypass_micro_oscillations" getter="get_bypass_micro_oscillations" default="false">
+		</member>
+		<member name="bypass_parallax" type="bool" setter="set_bypass_parallax" getter="get_bypass_parallax" default="false">
+		</member>
+		<member name="bypass_reverb" type="bool" setter="set_bypass_reverb" getter="get_bypass_reverb" default="false">
+		</member>
+		<member name="bypass_shadow" type="bool" setter="set_bypass_shadow" getter="get_bypass_shadow" default="false">
+		</member>
+		<member name="distance" type="float" setter="set_distance" getter="get_distance" default="0.3">
+		</member>
+		<member name="elevation" type="float" setter="set_elevation" getter="get_elevation" default="0.0">
+		</member>
+		<member name="gain" type="float" setter="set_gain" getter="get_gain" default="0.0">
+		</member>
+		<member name="head_circumference" type="float" setter="set_head_circumference" getter="get_head_circumference" default="57.5">
+		</member>
+		<member name="hrtf_id" type="float" setter="set_hrtf_id" getter="get_hrtf_id" default="0.0">
+		</member>
+		<member name="max_attenuation" type="float" setter="set_max_attenuation" getter="get_max_attenuation" default="10.0">
+		</member>
+		<member name="min_attenuation" type="float" setter="set_min_attenuation" getter="get_min_attenuation" default="0.1">
+		</member>
+		<member name="responsiveness" type="float" setter="set_responsiveness" getter="get_responsiveness" default="0.04">
+		</member>
+		<member name="reverb_EQ" type="Vector3" setter="set_reverb_EQ" getter="get_reverb_EQ" default="Vector3(0, 0, 0)">
+		</member>
+		<member name="reverb_gain" type="float" setter="set_reverb_gain" getter="get_reverb_gain" default="0.0">
+		</member>
+		<member name="reverb_type" type="int" setter="set_reverb_type" getter="get_reverb_type" enum="AnaglyphEffectData.AnaglyphReverbType" default="1">
+		</member>
+		<member name="room_id" type="float" setter="set_room_id" getter="get_room_id" default="0.5">
+		</member>
+		<member name="use_custom_circumference" type="bool" setter="set_use_custom_circumference" getter="get_use_custom_circumference" default="false">
+		</member>
+		<member name="wet" type="float" setter="set_wet" getter="get_wet" default="100.0">
+		</member>
+	</members>
+	<constants>
+		<constant name="ANAGLYPH_REVERB_OMNI" value="0" enum="AnaglyphReverbType">
+		</constant>
+		<constant name="ANAGLYPH_REVERB_2D" value="1" enum="AnaglyphReverbType">
+		</constant>
+		<constant name="ANAGLYPH_REVERB_3D_1" value="2" enum="AnaglyphReverbType">
+		</constant>
+		<constant name="ANAGLYPH_REVERB_3D_2" value="3" enum="AnaglyphReverbType">
+		</constant>
+	</constants>
+</class>

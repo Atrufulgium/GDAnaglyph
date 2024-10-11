@@ -16,6 +16,16 @@ env = SConscript("godot-cpp/SConstruct")
 env.Append(CPPPATH=["src/"])
 sources = Glob("src/*.cpp")
 
+# Documentation stuff copypasted from
+# https://docs.godotengine.org/en/stable/tutorials/scripting/gdextension/gdextension_docs_system.html
+# as suggested.
+if env["target"] in ["editor", "template_debug"]:
+    try:
+        doc_data = env.GodotCPPDocData("src/gen/doc_data.gen.cpp", source=Glob("doc_classes/*.xml"))
+        sources.append(doc_data)
+    except AttributeError:
+        print("Not including class reference as we're targeting a pre-4.3 baseline.")
+
 if env["platform"] == "macos":
     library = env.SharedLibrary(
         "demo/bin/libgdanaglyph.{}.{}.framework/libgdanaglyph.{}.{}".format(
