@@ -12,20 +12,20 @@
 
 namespace godot {
 
-	class GDAnaglyph;
+	class AnaglyphEffect;
 
-	class GDAnaglyphInstance : public AudioEffectInstance {
-		GDCLASS(GDAnaglyphInstance, AudioEffectInstance);
-		friend class GDAnaglyph;
+	class AnaglyphEffectInstance : public AudioEffectInstance {
+		GDCLASS(AnaglyphEffectInstance, AudioEffectInstance);
+		friend class AnaglyphEffect;
 
-		Ref<GDAnaglyph> base;
+		Ref<AnaglyphEffect> base;
 
 	protected:
 		static void _bind_methods();
 
 	public:
-		GDAnaglyphInstance();
-		~GDAnaglyphInstance();
+		AnaglyphEffectInstance();
+		~AnaglyphEffectInstance();
 
 		// (really AudioFrame* p_src_frames)
 
@@ -37,9 +37,9 @@ namespace godot {
 		bool _process_silence() const override;
 	};
 
-	class GDAnaglyph : public AudioEffect {
-		GDCLASS(GDAnaglyph, AudioEffect);
-		friend class GDAnaglyphInstance;
+	class AnaglyphEffect : public AudioEffect {
+		GDCLASS(AnaglyphEffect, AudioEffect);
+		friend class AnaglyphEffectInstance;
 
 		UnityAudioEffectState state;
 
@@ -47,8 +47,8 @@ namespace godot {
 		static void _bind_methods();
 
 	public:
-		GDAnaglyph();
-		~GDAnaglyph();
+		AnaglyphEffect();
+		~AnaglyphEffect();
 
 		Ref<AudioEffectInstance> _instantiate() override;
 		// So, this stupid `duplicate` method is virtual in the engine itself,

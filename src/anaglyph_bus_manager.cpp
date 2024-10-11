@@ -99,7 +99,7 @@ void AnaglyphBusManager::prepare_anaglyph_buses(int count) {
 	}
 }
 
-StringName AnaglyphBusManager::borrow_anaglyph_bus(const StringName& base_bus, const Ref<GDAnaglyph>& anaglyph_data) {
+StringName AnaglyphBusManager::borrow_anaglyph_bus(const StringName& base_bus, const Ref<AnaglyphEffect>& anaglyph_data) {
 	// Grab or create a bus.
 	// Grabbing may fail if AudioServer::set_bus_layout did a thing.
 	StringName name;

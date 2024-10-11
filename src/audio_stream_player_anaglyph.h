@@ -1,7 +1,7 @@
 #ifndef GDANAGLYPH_PLAYER
 #define GDANAGLYPH_PLAYER
 
-#include "gdanaglyph.h"
+#include "anaglyph_effect.h"
 #include "register_macro.h"
 
 #include <godot_cpp/classes/audio_stream.hpp>
@@ -58,7 +58,7 @@ namespace godot {
 		
 		float max_anaglyph_range;
 		ForceStream forcing;
-		Ref<GDAnaglyph> anaglyph_state;
+		Ref<AnaglyphEffect> anaglyph_state;
 
 		bool dupe_protection;
 		bool delete_on_finish;
@@ -132,8 +132,8 @@ namespace godot {
 		void set_forcing(ForceStream forcing);
 		ForceStream get_forcing() const;
 
-		void set_anaglyph_state(Ref<GDAnaglyph> anaglyph_state);
-		Ref<GDAnaglyph> get_anaglyph_state() const;
+		void set_anaglyph_state(Ref<AnaglyphEffect> anaglyph_state);
+		Ref<AnaglyphEffect> get_anaglyph_state() const;
 
 		// Misc
 		void set_dupe_protection(const bool protect);
@@ -159,7 +159,7 @@ namespace godot {
 			Ref<AudioStream> stream,
 			Vector3 global_position,
 			float volume_db = 0,
-			Ref<GDAnaglyph> anaglyph_settings = nullptr,
+			Ref<AnaglyphEffect> anaglyph_settings = nullptr,
 			StringName bus = "Master"
 		);
 	};

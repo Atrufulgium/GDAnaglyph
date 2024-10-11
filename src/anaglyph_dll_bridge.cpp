@@ -1,4 +1,4 @@
-#include "gdanaglyph_bridge.h"
+#include "anaglyph_dll_bridge.h"
 
 #include <godot_cpp/classes/audio_server.hpp>
 #include <godot_cpp/core/error_macros.hpp>
@@ -154,7 +154,7 @@ UNITY_AUDIODSP_RESULT AnaglyphBridge::Reset(UnityAudioEffectState* state) {
 	anaglyph_definition->reset(state);
 
 	// Set the params not exposed to their lifetime-constant values.
-	// (See gdanaglyph.h for he meaning of these magic numbers.)
+	// (See anaglyph_effect.h for he meaning of these magic numbers.)
 	SetParam(state, 0, 0);
 	SetParam(state, 2, 0);
 	SetParam(state, 7, 0);

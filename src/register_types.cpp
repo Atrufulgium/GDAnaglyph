@@ -1,7 +1,7 @@
 #include "anaglyph_export_plugin.h"
 #include "audio_stream_player_anaglyph.h"
-#include "gdanaglyph.h"
-#include "gdanaglyph_bridge.h"
+#include "anaglyph_dll_bridge.h"
+#include "anaglyph_effect.h"
 #include "register_types.h"
 
 #include <gdextension_interface.h>
@@ -21,8 +21,8 @@ void initialize_gdanaglyph_module(ModuleInitializationLevel p_level) {
 	}
 	else if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
 		GDREGISTER_CLASS(AudioStreamPlayerAnaglyph);
-		GDREGISTER_CLASS(GDAnaglyph);
-		GDREGISTER_CLASS(GDAnaglyphInstance);
+		GDREGISTER_CLASS(AnaglyphEffect);
+		GDREGISTER_CLASS(AnaglyphEffectInstance);
 
 		// Might as well load the dll at the start.
 		// Note that we won't unload the dll at any point. Let it be cleaned up

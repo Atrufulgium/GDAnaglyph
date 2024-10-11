@@ -1,6 +1,6 @@
 #include "audio_stream_player_anaglyph.h"
 #include "anaglyph_bus_manager.h"
-#include "gdanaglyph_bridge.h"
+#include "anaglyph_dll_bridge.h"
 
 #include <godot_cpp/classes/audio_listener3d.hpp>
 #include <godot_cpp/classes/camera3d.hpp>
@@ -171,7 +171,7 @@ void AudioStreamPlayerAnaglyph::_process(double delta) {
 	}
 
 	// Get the anaglyph positional parameters
-	Vector3 polar = GDAnaglyph::calculate_polar_position(this, get_listener_node());
+	Vector3 polar = AnaglyphEffect::calculate_polar_position(this, get_listener_node());
 
 	// Decide whether to process Anaglyph or the fallback.
 	// Switching between Anaglyph and the fallback should be as smooth as
@@ -410,12 +410,12 @@ AudioStreamPlayerAnaglyph::ForceStream AudioStreamPlayerAnaglyph::get_forcing() 
 	return forcing;
 }
 
-void AudioStreamPlayerAnaglyph::set_anaglyph_state(Ref<GDAnaglyph> p_anaglyph_state) {
+void AudioStreamPlayerAnaglyph::set_anaglyph_state(Ref<AnaglyphEffect> p_anaglyph_state) {
 	anaglyph_state = p_anaglyph_state;
 	copy_shared_properties();
 }
 
-Ref<GDAnaglyph> AudioStreamPlayerAnaglyph::get_anaglyph_state() const {
+Ref<AnaglyphEffect> AudioStreamPlayerAnaglyph::get_anaglyph_state() const {
 	return anaglyph_state;
 }
 
@@ -461,7 +461,7 @@ void AudioStreamPlayerAnaglyph::play_oneshot(
 	Ref<AudioStream> stream,
 	Vector3 global_position,
 	float volume_db,
-	Ref<GDAnaglyph> anaglyph_settings,
+	Ref<AnaglyphEffect> anaglyph_settings,
 	StringName bus
 ) {
 	if (Engine::get_singleton()->is_editor_hint()) {
@@ -488,7 +488,7 @@ void AudioStreamPlayerAnaglyph::play_oneshot(
 
 	AudioStreamPlayerAnaglyph* node = memnew(AudioStreamPlayerAnaglyph);
 	if (anaglyph_settings == nullptr) {
-		node->set_anaglyph_state(memnew(GDAnaglyph));
+		node->set_anaglyph_state(memnew(AnaglyphEffect));
 	}
 	else {
 		node->set_anaglyph_state(anaglyph_settings->duplicate_including_anaglyph());
@@ -523,7 +523,7 @@ void AudioStreamPlayerAnaglyph::_bind_methods() {
 	ADD_GROUP("Anaglyph settings", "");
 	REGISTER(FLOAT, max_anaglyph_range, AudioStreamPlayerAnaglyph, "max_anaglyph_range", PROPERTY_HINT_RANGE, "0,10,0.01,suffix:m");
 	REGISTER(INT, forcing, AudioStreamPlayerAnaglyph, "forcing", PROPERTY_HINT_ENUM, "None,Anaglyph On,Anaglyph Off");
-	REGISTER_USAGE(OBJECT, anaglyph_state, AudioStreamPlayerAnaglyph, "anaglyph_state", PROPERTY_HINT_RESOURCE_TYPE, "GDAnaglyph", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_EDITOR_INSTANTIATE_OBJECT);
+	REGISTER_USAGE(OBJECT, anaglyph_state, AudioStreamPlayerAnaglyph, "anaglyph_state", PROPERTY_HINT_RESOURCE_TYPE, "AnaglyphEffect", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_EDITOR_INSTANTIATE_OBJECT);
 
 	ADD_GROUP("Misc settings", "");
 	REGISTER(BOOL, dupe_protection, AudioStreamPlayerAnaglyph, "duplication_protection", PROPERTY_HINT_NONE, "");

@@ -5,8 +5,6 @@
 #ifndef GDANAGLYPH_EXPORT
 #define GDANAGLYPH_EXPORT
 
-#include "gdanaglyph.h"
-
 #include <godot_cpp/classes/editor_export_plugin.hpp>
 #include <godot_cpp/classes/editor_plugin.hpp>
 

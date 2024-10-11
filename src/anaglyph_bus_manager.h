@@ -1,7 +1,7 @@
 #ifndef GDANAGLYPH_BUSES
 #define GDANAGLYPH_BUSES
 
-#include "gdanaglyph.h"
+#include "anaglyph_effect.h"
 
 #include <godot_cpp/classes/audio_server.hpp>
 
@@ -55,7 +55,7 @@ namespace godot {
 		// Tries to get a free anaglyph'd bus, which gets its output rerouted
 		// into the base bus.
 		// If there is no free bus, directly returns the base bus.
-		StringName borrow_anaglyph_bus(const StringName& base_bus, const Ref<GDAnaglyph>& anaglyph_data);
+		StringName borrow_anaglyph_bus(const StringName& base_bus, const Ref<AnaglyphEffect>& anaglyph_data);
 		// Once you're done with a bus, return it.
 		// This does not do any validation.
 		void return_anaglyph_bus(const StringName& anaglyph_bus);
