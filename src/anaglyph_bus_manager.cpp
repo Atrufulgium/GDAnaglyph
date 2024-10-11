@@ -96,6 +96,14 @@ void AnaglyphBusManager::prepare_anaglyph_buses(int count) {
 
 	for (int i = 0; i < count; i++) {
 		anaglyph_buses.push_back(add_bus(StringName(a_bus_name)));
+		// Preparation is pretty lazy and only happens on borrow.
+		// Force this by borrowing what we just created.
+		// (Yeah ik creating refs in a loop like this is suboptimal, but this
+		//  loop iterates at most, like, 3 times.)
+		Ref<AnaglyphEffectData> placeholder_data = memnew(AnaglyphEffectData);
+		Ref<AnaglyphEffect> placeholder_effect = nullptr;
+		StringName borrow = borrow_anaglyph_bus("Master", placeholder_data, placeholder_effect);
+		return_anaglyph_bus(borrow);
 	}
 }
 

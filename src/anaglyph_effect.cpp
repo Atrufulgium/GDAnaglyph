@@ -5,6 +5,8 @@
 
 using namespace godot;
 
+AudioFrame* AnaglyphEffect::warmup_buffer = nullptr;
+
 AnaglyphEffectInstance::AnaglyphEffectInstance() { }
 
 AnaglyphEffectInstance::~AnaglyphEffectInstance() { }
@@ -35,11 +37,25 @@ AnaglyphEffect::AnaglyphEffect() {
 
 	if (defs == nullptr) {
 		godot::UtilityFunctions::push_warning("Anaglyph dll did not load correctly. This Audio Effect won't do anything.");
+		return;
 	}
 
 	UnityAudioEffectState st{};
 	state = st;
 	AnaglyphBridge::Create(&state);
+	
+	// Ensure the model is prepared.
+	// (Not freeing because (1) this can get called over the lifetime a bunch'a
+	//  times, and (2) godot shadowed free because I'm not supposed to use native
+	//  memory like this, and (3) it's only 4~16kb getting leaked if this never
+	//  gets used again.)
+	if (warmup_buffer == nullptr) {
+		warmup_buffer = (AudioFrame*) calloc(AnaglyphBridge::get_dsp_buffer_size(), sizeof(AudioFrame));
+	}
+	if (warmup_buffer != nullptr) {
+		AnaglyphBridge::Process(&state, warmup_buffer, warmup_buffer, AnaglyphBridge::get_dsp_buffer_size());
+		warmup_buffer = nullptr;
+	}
 }
 
 AnaglyphEffect::~AnaglyphEffect() {

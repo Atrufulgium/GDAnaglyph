@@ -32,11 +32,7 @@ namespace godot {
 		//     '- all .sofa files
 		static std::string dll_path;
 
-		// Anaglyph uses some internal buffers, whose size needs to match the
-		// size of the input/output buffers.
-		// This method gets those.
-		static int get_dsp_buffer_size();
-		// (To not recalculate the above every single time.)
+		// (To not recalculate the buffer size every single time.)
 		static int computed_buffer_size;
 		
 		// The workhorse of GetEffectData();
@@ -52,6 +48,11 @@ namespace godot {
 		// The first time this is called, Anaglyph may show its own errors in
 		// its own UI on screen.
 		static UnityAudioEffectDefinition* GetEffectData();
+
+		// Anaglyph uses some internal buffers, whose size needs to match the
+		// size of the input/output buffers.
+		// This method gets those.
+		static int get_dsp_buffer_size();
 
 		// Create a new DSP instance.
 		static UNITY_AUDIODSP_RESULT Create(UnityAudioEffectState* state);

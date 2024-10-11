@@ -46,6 +46,17 @@ namespace godot {
 		UnityAudioEffectState state;
 		Ref<AnaglyphEffectData> effect_data;
 
+		// Anaglyph instances seem to be lazy, and only properly load stuff
+		// once data is being sent. Downside: this takes a while so until it's
+		// loaded properly you get what you had.
+		// To work around that, send this buffer (without caring about its
+		// contents) to Anaglyph directly when we change models.
+		// This is not a big deal when going from model A to model B, but this
+		// *is* a big deal when first creating an instance and going from
+		// ordinary to model A.
+		// This buffer is just to be always zero.
+		static AudioFrame* warmup_buffer;
+
 		void ensure_effect_data_exists();
 
 		// The following methods send the current data to Anaglyph.
