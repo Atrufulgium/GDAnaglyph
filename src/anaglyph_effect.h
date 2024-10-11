@@ -41,11 +41,41 @@ namespace godot {
 	class AnaglyphEffect : public AudioEffect {
 		GDCLASS(AnaglyphEffect, AudioEffect);
 		friend class AnaglyphEffectInstance;
+		friend class AnaglyphEffectData;
 
 		UnityAudioEffectState state;
 		Ref<AnaglyphEffectData> effect_data;
 
 		void ensure_effect_data_exists();
+
+		// The following methods send the current data to Anaglyph.
+		void send_wet();
+		void send_gain();
+		
+		void send_hrtf_id();
+		void send_use_custom_circumference();
+		void send_head_circumference();
+		void send_responsiveness();
+		void send_bypass_binaural();
+		
+		void send_bypass_parallax();
+		void send_bypass_shadow();
+		void send_bypass_micro_oscillations();
+		
+		void send_min_attenuation();
+		void send_max_attenuation();
+		void send_attenuation_exponent();
+		void send_bypass_attenuation();
+		
+		void send_room_id();
+		void send_reverb_type();
+		void send_reverb_gain();
+		void send_reverb_EQ();
+		void send_bypass_reverb();
+		
+		void send_azimuth();
+		void send_elevation();
+		void send_distance();
 
 	protected:
 		static void _bind_methods();
@@ -64,6 +94,8 @@ namespace godot {
 		static Vector3 calculate_polar_position(Node3D* audio_source, Node3D* audio_listener);
 
 		// Sets all effect data and sends it to Anaglyph.
+		// This also causes the future updates of `data` to be sent to Anaglyph
+		// as well (until the next `set_effect_data()`.
 		void set_effect_data(Ref<AnaglyphEffectData> data);
 
 		// Below are the same properties as in anaglyph_effect_data.h,

@@ -7,6 +7,8 @@
 
 namespace godot {
 
+	class AnaglyphEffect;
+
 	// I don't like that I need to do this, but I need to capture "anaglyph
 	// states are bound to buses, while the effect data can be passed freely
 	// from/to where-ever" somehow. Yet I still want AnaglyphEffect to have
@@ -20,6 +22,8 @@ namespace godot {
 	// be synchronised to an instance inside Anaglyph's dll.
 	class AnaglyphEffectData : public Resource {
 		GDCLASS(AnaglyphEffectData, Resource);
+
+		friend class AnaglyphEffect;
 
 	public:
 		enum AnaglyphReverbType {
@@ -57,6 +61,12 @@ namespace godot {
 		float azimuth;
 		float elevation;
 		float distance;
+
+		// (Raw pointer instead of Ref<> to not get cyclic ref.
+		//  This thing won't be accessed when it's not Ref<>'d either any more)
+		// The most recent AnaglyphEffect to send updates to.
+		// This is *only* to be set/read from AnaglyphEffect.
+		AnaglyphEffect* most_recent_effect;
 
 	protected:
 		static void _bind_methods();

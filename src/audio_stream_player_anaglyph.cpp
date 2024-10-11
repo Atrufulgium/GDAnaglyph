@@ -21,11 +21,11 @@ AudioStreamPlayerAnaglyph::AudioStreamPlayerAnaglyph() {
 	// (See https://github.com/godotengine/godot/blob/1917bc3454e58fc56750b00e04aa25cb94d8d266/core/object/class_db.cpp#L2176 )
 	//anaglyph_state.instantiate();
 	volume = 0;
+	gain_reduction_fallback = 6;
 	pitch_scale = 1;
 	autoplay = false;
 	max_polyphony = 1;
 	bus = StringName("Master");
-	playback_type = AudioServer::PLAYBACK_TYPE_DEFAULT;
 
 	max_anaglyph_range = 10;
 	forcing = FORCE_NONE;
@@ -81,7 +81,7 @@ PackedStringArray AudioStreamPlayerAnaglyph::_get_configuration_warnings() const
 	Players players = Players{};
 
 	if (!get_players(players)) {
-		warnings.push_back("An AudioStreamPlayerAnaglyph requires exactly two children:\n- An AudioStreamPlayer for when Anaglyph is enabled; and\n- A fallback AudioStreamPlayer3D when Anaglyph is disabled.");
+		warnings.push_back("An AudioStreamPlayerAnaglyph requires exactly two children:\n- An AudioStreamPlayer for when Anaglyph is enabled; and\n- A fallback AudioStreamPlayer3D when Anaglyph is disabled.\nThese are created automatically when you add this node.\nSo usually you're just fine not adding any other children.");
 	}
 	return warnings;
 }
@@ -115,6 +115,7 @@ void AudioStreamPlayerAnaglyph::_enter_tree() {
 		b->set_name("Fallback AudioStream");
 		add_child(b, true);
 		b->set_owner(scene_root);
+		b->set_unit_size(1);
 	}
 }
 
@@ -209,26 +210,42 @@ void AudioStreamPlayerAnaglyph::_process(double delta) {
 	}
 }
 
-void AudioStreamPlayerAnaglyph::copy_shared_properties() const {
+void AudioStreamPlayerAnaglyph::copy_shared_properties() {
 	Players players = Players{};
 	// Don't do anything if the setup is incorrect.
 	if (!get_players(players)) {
 		return;
 	}
 
-	players.anaglyph->set_stream(audio_stream);
+	// Setting the stream resets it, so don't do that if we're not *actually*
+	// setting the stream.
+	if (players.anaglyph->get_stream() != audio_stream
+		|| !players.anaglyph->is_playing()) {
+		players.anaglyph->set_stream(audio_stream);
+	}
+	if (players.fallback->get_stream() != audio_stream
+		|| !players.fallback->is_playing()) {
+		players.fallback->set_stream(audio_stream);
+	}
+
+	// I overwrite buses in play mode, so only set the child buses like this if
+	// we're not playing.
+	if (Engine::get_singleton()->is_editor_hint()) {
+		players.anaglyph->set_bus(bus);
+		players.fallback->set_bus(bus);
+	}
+	else {
+		user_bus = bus;
+	}
+
+	// The easy ones.
 	players.anaglyph->set_volume_db(volume);
 	players.anaglyph->set_pitch_scale(pitch_scale);
 	players.anaglyph->set_autoplay(autoplay);
-	players.anaglyph->set_bus(bus);
-	players.anaglyph->set_playback_type(playback_type);
 
-	players.fallback->set_stream(audio_stream);
-	players.fallback->set_volume_db(volume);
+	players.fallback->set_volume_db(volume - gain_reduction_fallback);
 	players.fallback->set_pitch_scale(pitch_scale);
 	players.fallback->set_autoplay(autoplay);
-	players.fallback->set_bus(bus);
-	players.fallback->set_playback_type(playback_type);
 }
 
 void AudioStreamPlayerAnaglyph::set_stream(Ref<AudioStream> p_audio_stream) {
@@ -255,6 +272,15 @@ float AudioStreamPlayerAnaglyph::get_volume_db() const {
 	return volume;
 }
 
+void AudioStreamPlayerAnaglyph::set_gain_reduction_fallback_db(float reduction) {
+	gain_reduction_fallback = reduction;
+	copy_shared_properties();
+}
+
+float AudioStreamPlayerAnaglyph::get_gain_reduction_fallback_db() const {
+	return gain_reduction_fallback;
+}
+
 void AudioStreamPlayerAnaglyph::set_pitch_scale(float p_pitch_scale) {
 	pitch_scale = p_pitch_scale;
 	copy_shared_properties();
@@ -279,15 +305,6 @@ void AudioStreamPlayerAnaglyph::set_bus(const StringName& p_bus) {
 
 StringName AudioStreamPlayerAnaglyph::get_bus() const {
 	return bus;
-}
-
-void AudioStreamPlayerAnaglyph::set_playback_type(AudioServer::PlaybackType p_playback_type) {
-	playback_type = p_playback_type;
-	copy_shared_properties();
-}
-
-AudioServer::PlaybackType AudioStreamPlayerAnaglyph::get_playback_type() const {
-	return playback_type;
 }
 
 void AudioStreamPlayerAnaglyph::set_max_anaglyph_range(float meters) {
@@ -513,6 +530,7 @@ void AudioStreamPlayerAnaglyph::_bind_methods() {
 	ADD_GROUP("Shared stream settings", "");
 	REGISTER(OBJECT, stream, AudioStreamPlayerAnaglyph, "stream", PROPERTY_HINT_RESOURCE_TYPE, "AudioStream");
 	REGISTER(FLOAT, volume_db, AudioStreamPlayerAnaglyph, "volume_db", PROPERTY_HINT_RANGE, "-80,24,suffix:dB");
+	REGISTER(FLOAT, gain_reduction_fallback_db, AudioStreamPlayerAnaglyph, "fallback_reduction_db", PROPERTY_HINT_RANGE, "0,80,suffix:dB");
 	REGISTER(FLOAT, pitch_scale, AudioStreamPlayerAnaglyph, "pitch_scale", PROPERTY_HINT_RANGE, "0.01,4,0.01,or_greater");
 	ClassDB::bind_method(D_METHOD("is_playing"), &AudioStreamPlayerAnaglyph::get_playing);
 	ClassDB::bind_method(D_METHOD("set_playing", "enable"), &AudioStreamPlayerAnaglyph::set_playing);
@@ -521,7 +539,6 @@ void AudioStreamPlayerAnaglyph::_bind_methods() {
 	REGISTER(BOOL, autoplay, AudioStreamPlayerAnaglyph, "autoplay", PROPERTY_HINT_NONE, "");
 	// This one's hint string is filled by validate_property
 	REGISTER(STRING_NAME, bus, AudioStreamPlayerAnaglyph, "bus", PROPERTY_HINT_ENUM, "");
-	REGISTER(INT, playback_type, AudioStreamPlayerAnaglyph, "playback_type", PROPERTY_HINT_ENUM, "Default,Stream,Sample");
 
 	ADD_GROUP("Anaglyph settings", "");
 	REGISTER(FLOAT, max_anaglyph_range, AudioStreamPlayerAnaglyph, "max_anaglyph_range", PROPERTY_HINT_RANGE, "0,10,0.01,suffix:m");

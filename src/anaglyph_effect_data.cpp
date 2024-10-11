@@ -36,12 +36,17 @@ AnaglyphEffectData::AnaglyphEffectData() {
 	azimuth = 0;
 	elevation = 0;
 	distance = 0.3;
+
+	most_recent_effect = nullptr;
 }
 
 AnaglyphEffectData::~AnaglyphEffectData() { }
 
 void AnaglyphEffectData::set_wet(const float percentage) {
 	wet = CLAMP(percentage, 0, 100);
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_wet();
+	}
 }
 float AnaglyphEffectData::get_wet() {
 	return wet;
@@ -49,6 +54,9 @@ float AnaglyphEffectData::get_wet() {
 
 void AnaglyphEffectData::set_gain(const float value) {
 	gain = CLAMP(value, -40, 15);
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_gain();
+	}
 }
 float AnaglyphEffectData::get_gain() {
 	return gain;
@@ -56,6 +64,9 @@ float AnaglyphEffectData::get_gain() {
 
 void AnaglyphEffectData::set_hrtf_id(const float value) {
 	hrtf_id = CLAMP(value, 0, 1);
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_hrtf_id();
+	}
 }
 float AnaglyphEffectData::get_hrtf_id() {
 	return hrtf_id;
@@ -63,6 +74,9 @@ float AnaglyphEffectData::get_hrtf_id() {
 
 void AnaglyphEffectData::set_use_custom_circumference(const bool value) {
 	use_custom_circumference = value;
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_use_custom_circumference();
+	}
 }
 bool AnaglyphEffectData::get_use_custom_circumference() {
 	return use_custom_circumference;
@@ -70,6 +84,9 @@ bool AnaglyphEffectData::get_use_custom_circumference() {
 
 void AnaglyphEffectData::set_head_circumference(const float value) {
 	head_circumference = CLAMP(value, 20, 80);
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_head_circumference();
+	}
 }
 float AnaglyphEffectData::get_head_circumference() {
 	return head_circumference;
@@ -77,6 +94,9 @@ float AnaglyphEffectData::get_head_circumference() {
 
 void AnaglyphEffectData::set_responsiveness(const float value) {
 	responsiveness = CLAMP(value, 0, 1);
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_responsiveness();
+	}
 }
 float AnaglyphEffectData::get_responsiveness() {
 	return responsiveness;
@@ -84,6 +104,9 @@ float AnaglyphEffectData::get_responsiveness() {
 
 void AnaglyphEffectData::set_bypass_binaural(const bool value) {
 	bypass_binaural = value;
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_bypass_binaural();
+	}
 }
 bool AnaglyphEffectData::get_bypass_binaural() {
 	return bypass_binaural;
@@ -91,6 +114,9 @@ bool AnaglyphEffectData::get_bypass_binaural() {
 
 void AnaglyphEffectData::set_bypass_parallax(const bool value) {
 	bypass_parallax = value;
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_bypass_parallax();
+	}
 }
 bool AnaglyphEffectData::get_bypass_parallax() {
 	return bypass_parallax;
@@ -98,6 +124,9 @@ bool AnaglyphEffectData::get_bypass_parallax() {
 
 void AnaglyphEffectData::set_bypass_shadow(const bool value) {
 	bypass_shadow = value;
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_bypass_shadow();
+	}
 }
 bool AnaglyphEffectData::get_bypass_shadow() {
 	return bypass_shadow;
@@ -105,6 +134,9 @@ bool AnaglyphEffectData::get_bypass_shadow() {
 
 void AnaglyphEffectData::set_bypass_micro_oscillations(const bool value) {
 	bypass_micro_oscillations = value;
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_bypass_micro_oscillations();
+	}
 }
 bool AnaglyphEffectData::get_bypass_micro_oscillations() {
 	return bypass_micro_oscillations;
@@ -115,6 +147,9 @@ void AnaglyphEffectData::set_min_attenuation(const float value) {
 	float max = max_attenuation;
 	if (max < value) {
 		set_max_attenuation(value);
+	}
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_min_attenuation();
 	}
 }
 float AnaglyphEffectData::get_min_attenuation() {
@@ -127,6 +162,9 @@ void AnaglyphEffectData::set_max_attenuation(const float value) {
 	if (min > value) {
 		set_min_attenuation(value);
 	}
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_max_attenuation();
+	}
 }
 float AnaglyphEffectData::get_max_attenuation() {
 	return max_attenuation;
@@ -134,6 +172,9 @@ float AnaglyphEffectData::get_max_attenuation() {
 
 void AnaglyphEffectData::set_attenuation_exponent(const float value) {
 	attenuation_exponent = CLAMP(value, 0, 2);
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_attenuation_exponent();
+	}
 }
 float AnaglyphEffectData::get_attenuation_exponent() {
 	return attenuation_exponent;
@@ -141,6 +182,9 @@ float AnaglyphEffectData::get_attenuation_exponent() {
 
 void AnaglyphEffectData::set_bypass_attenuation(const bool value) {
 	bypass_attenuation = value;
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_bypass_attenuation();
+	}
 }
 bool AnaglyphEffectData::get_bypass_attenuation() {
 	return bypass_attenuation;
@@ -148,6 +192,9 @@ bool AnaglyphEffectData::get_bypass_attenuation() {
 
 void AnaglyphEffectData::set_room_id(const float value) {
 	room_id = CLAMP(value, 0, 1);
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_room_id();
+	}
 }
 float AnaglyphEffectData::get_room_id() {
 	return room_id;
@@ -155,6 +202,9 @@ float AnaglyphEffectData::get_room_id() {
 
 void AnaglyphEffectData::set_reverb_type(const AnaglyphReverbType value) {
 	reverb_type = value;
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_reverb_type();
+	}
 }
 AnaglyphEffectData::AnaglyphReverbType AnaglyphEffectData::get_reverb_type() {
 	return reverb_type;
@@ -162,6 +212,9 @@ AnaglyphEffectData::AnaglyphReverbType AnaglyphEffectData::get_reverb_type() {
 
 void AnaglyphEffectData::set_reverb_gain(const float value) {
 	reverb_gain = CLAMP(value, -40, 15);
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_reverb_gain();
+	}
 }
 float AnaglyphEffectData::get_reverb_gain() {
 	return reverb_gain;
@@ -171,6 +224,9 @@ void AnaglyphEffectData::set_reverb_EQ(const Vector3 value) {
 	reverb_EQ.x = CLAMP(value.x, -40, 15);
 	reverb_EQ.y = CLAMP(value.y, -40, 15);
 	reverb_EQ.z = CLAMP(value.z, -40, 15);
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_reverb_EQ();
+	}
 }
 Vector3 AnaglyphEffectData::get_reverb_EQ() {
 	return reverb_EQ;
@@ -178,6 +234,9 @@ Vector3 AnaglyphEffectData::get_reverb_EQ() {
 
 void AnaglyphEffectData::set_bypass_reverb(const bool value) {
 	bypass_reverb = value;
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_bypass_reverb();
+	}
 }
 bool AnaglyphEffectData::get_bypass_reverb() {
 	return bypass_reverb;
@@ -185,6 +244,9 @@ bool AnaglyphEffectData::get_bypass_reverb() {
 
 void AnaglyphEffectData::set_azimuth(const float value) {
 	azimuth = CLAMP(fmodf(value + 180, 360) - 180, -180, 180);
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_azimuth();
+	}
 }
 float AnaglyphEffectData::get_azimuth() {
 	return azimuth;
@@ -192,6 +254,9 @@ float AnaglyphEffectData::get_azimuth() {
 
 void AnaglyphEffectData::set_elevation(const float value) {
 	elevation = CLAMP(value, -90, 90);
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_elevation();
+	}
 }
 float AnaglyphEffectData::get_elevation() {
 	return elevation;
@@ -199,6 +264,9 @@ float AnaglyphEffectData::get_elevation() {
 
 void AnaglyphEffectData::set_distance(const float value) {
 	distance = CLAMP(value, 0.1, 10);
+	if (most_recent_effect != nullptr) {
+		most_recent_effect->send_distance();
+	}
 }
 float AnaglyphEffectData::get_distance() {
 	return distance;

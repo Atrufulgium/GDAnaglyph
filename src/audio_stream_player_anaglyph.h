@@ -52,11 +52,11 @@ namespace godot {
 
 		Ref<AudioStream> audio_stream;
 		float volume;
+		float gain_reduction_fallback;
 		float pitch_scale;
 		bool autoplay;
 		int max_polyphony;
 		StringName bus;
-		AudioServer::PlaybackType playback_type;
 		
 		float max_anaglyph_range;
 		ForceStream forcing;
@@ -72,7 +72,7 @@ namespace godot {
 
 		// Some properties are shared between the two players, and to be set in
 		// this node. This copies that data over to the child nodes.
-		void copy_shared_properties() const;
+		void copy_shared_properties();
 		// Tries to find what Camera/AudioListener3D should be listening to this.
 		Node3D* get_listener_node() const;
 
@@ -115,6 +115,9 @@ namespace godot {
 		void set_volume_db(float volume);
 		float get_volume_db() const;
 
+		void set_gain_reduction_fallback_db(float volume);
+		float get_gain_reduction_fallback_db() const;
+
 		void set_pitch_scale(float pitch_scale);
 		float get_pitch_scale() const;
 
@@ -123,9 +126,6 @@ namespace godot {
 
 		void set_bus(const StringName& bus);
 		StringName get_bus() const;
-
-		void set_playback_type(AudioServer::PlaybackType playback_type);
-		AudioServer::PlaybackType get_playback_type() const;
 
 		// Anaglyph
 		void set_max_anaglyph_range(float meters);
