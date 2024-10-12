@@ -95,9 +95,6 @@ namespace godot {
 		~AnaglyphEffect();
 
 		Ref<AudioEffectInstance> _instantiate() override;
-		// So, this stupid `duplicate` method is virtual in the engine itself,
-		// but not in the cpp bindings? What's that about.
-		Ref<Resource> duplicate_including_anaglyph(bool p_subresources = false) const;
 
 		// Sets all effect data and sends it to Anaglyph.
 		// This also causes the future updates of `data` to be sent to Anaglyph

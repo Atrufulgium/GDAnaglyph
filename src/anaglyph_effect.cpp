@@ -447,6 +447,8 @@ void AnaglyphEffect::_bind_methods() {
 	REGISTER(FLOAT, elevation, AnaglyphEffect, "angle", PROPERTY_HINT_RANGE, "-90,90,0.1,degrees");
 	REGISTER(FLOAT, distance, AnaglyphEffect, "meters", PROPERTY_HINT_RANGE, "0.1,10,0.1,suffix:m");
 
+	ClassDB::bind_method(D_METHOD("set_effect_data", "data"), &AnaglyphEffect::set_effect_data);
+
 	// Steal the helper method into this class.
 	ClassDB::bind_static_method("AnaglyphEffect", D_METHOD("calculate_polar_position", "source", "listener"), &AnaglyphHelpers::calculate_polar_position);
 }

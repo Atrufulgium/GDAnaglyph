@@ -1,8 +1,27 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="AnaglyphExportPlugin" inherits="EditorExportPlugin" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
+		Editor plugin that ensures exported builds have Anaglyph in the right place.
 	</brief_description>
 	<description>
+		[b]Note:[/b] You should not need to use this class directly at any point.
+		The following directory structure is enforced by both this extension and Anaglyph itself:
+		[codeblock lang=text]
+		(root)
+		├ (Game executable)
+		├ (Other files)
+		└ Anaglyph
+		  ├ .DS_STORE
+		  ├ audioplugin_Anaglyph.dll
+		  └ anaglyph_plugin_data
+		    ├ .DS_Store
+		    ├ (ILD .sofa's)
+		    ├ (head model .sofa's)
+		    ├ (reverb .sofa's)
+		    └ (possibly extra user .sofa's)
+		[/codeblock]
+		This class ensures the files are copied from [code]res://Anaglyph[/code] over to the finished build.
+		[b]Warning:[/b] It is currently only tested on Windows. This scheme doesn't even make sense for some exports.
 	</description>
 	<tutorials>
 	</tutorials>

@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="AnaglyphEffectInstance" inherits="AudioEffectInstance" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
+		The [AudioEffectInstance] of an [AnaglyphEffect].
 	</brief_description>
 	<description>
+		[b]Note:[/b] You should not need to use this class directly at any point.
 	</description>
 	<tutorials>
 	</tutorials>

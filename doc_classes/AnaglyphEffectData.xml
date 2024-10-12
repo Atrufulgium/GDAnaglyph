@@ -1,55 +1,96 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="AnaglyphEffectData" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
+		A convenient container foor all data belonging to an [AnaglyphEffect].
 	</brief_description>
 	<description>
+		For internal reasons, it is convenient to separate the data from the [AnaglyphEffect]. This [Resource] is this separate data.
+		You can set the data of an [AnaglyphEffect] by using [method AnaglyphEffect.set_effect_data].
+		[b]Note:[/b] The below members, and all of their documentation, are the same as [AnaglyphEffect].
 	</description>
 	<tutorials>
 	</tutorials>
 	<members>
 		<member name="attenuation_exponent" type="float" setter="set_attenuation_exponent" getter="get_attenuation_exponent" default="1.0">
+			A number between [code]0.0[/code] and [code]2.0[/code]. When higher, sounds further away become quiet fast. When lower, sounds are audible over a larger distance.
 		</member>
 		<member name="azimuth" type="float" setter="set_azimuth" getter="get_azimuth" default="0.0">
+			The horizontal rotation of the audio source compared to the listener. This is an angle between [code]-180[/code]° and [code]180[/code]°. An angle of [code]0.0[/code] is straight in front, while an angle of [code]90.0[/code] is to your right.
+			[b]Note:[/b] If you use an [AudioStreamPlayerAnaglyph], you won't have to set this yourself.
 		</member>
 		<member name="bypass_attenuation" type="bool" setter="set_bypass_attenuation" getter="get_bypass_attenuation" default="false">
+			Attenuation is the (quite intuitive!) phenomenon where sounds farther away sound quieter.
+			If [code]true[/code], this will be disabled and distance will not be taken into account.
 		</member>
 		<member name="bypass_binaural" type="bool" setter="set_bypass_binaural" getter="get_bypass_binaural" default="false">
+			If [code]true[/code], the realistic binaural processing will be disabled. Note that this does not include attenuation or reverb, but does include parallax, micro oscillations, and shadowing.
 		</member>
 		<member name="bypass_micro_oscillations" type="bool" setter="set_bypass_micro_oscillations" getter="get_bypass_micro_oscillations" default="false">
+			Micro oscillations cause the source to very slightly vibrate to help the ears position the sound even better. (Compare with how you can't hold your head perfectly still in real life!)
+			If [code]true[/code], these hints are disabled. This gives you a small performance boost at the cost of some realism (especially sacrificing some difference between "front" and "back").
 		</member>
 		<member name="bypass_parallax" type="bool" setter="set_bypass_parallax" getter="get_bypass_parallax" default="false">
+			With parallax, each ear "sees" the sound source from its own angle, instead of computing just one angle based on the head position. This helps the ears position nearby sounds even better.
+			If [code]true[/code], this hint is disabled. This gives you a small performance boost at the cost of some realism (especially of nearby sounds).
 		</member>
 		<member name="bypass_reverb" type="bool" setter="set_bypass_reverb" getter="get_bypass_reverb" default="false">
+			If [code]true[/code], reverb will not be applied to the result.
 		</member>
 		<member name="bypass_shadow" type="bool" setter="set_bypass_shadow" getter="get_bypass_shadow" default="false">
+			When sounds come from your left and reach your right ear, some sound waves travel through your head instead of air. Your head creates a "shadow", that influences the resulting sound a little.
+			If [code]true[/code], this hint is disabled. This gives you a small performance boost at the cost of some realism (especially of nearby sounds).
 		</member>
 		<member name="distance" type="float" setter="set_distance" getter="get_distance" default="0.3">
+			The distance between the audio source and the listener. This ranges between [code]0.1[/code] and [code]10[/code] meters.
+			[b]Note:[/b] If you use an [AudioStreamPlayerAnaglyph], you won't have to set this yourself.
 		</member>
 		<member name="elevation" type="float" setter="set_elevation" getter="get_elevation" default="0.0">
+			The vertical rotation of the audio source compared to the listener. This is an angle between [code]-90[/code]° and [code]90[/code]°. An angle of [code]90.0[/code] is straight above you, while an angle of [code]-90.0[/code] is straight below you. And angle of for example [code]20.0[/code] is just a little upwards from you.
+			[b]Note:[/b] If you use an [AudioStreamPlayerAnaglyph], you won't have to set this yourself.
 		</member>
 		<member name="gain" type="float" setter="set_gain" getter="get_gain" default="0.0">
+			Extra volume control. This modifies the overall volume between [code]-40[/code] and [code]+15[/code]dB.
 		</member>
 		<member name="head_circumference" type="float" setter="set_head_circumference" getter="get_head_circumference" default="57.5">
+			The (horizontal) head circumference of the listener. This is a value between [code]20.0[/code] and [code]80.0[/code]cm. Go grab a measuring tape!
+			[b]Note:[/b] This value is only used if [member use_custom_circumference] is [code]true[/code]. Otherwise, the loaded model's default circumference will be used.
 		</member>
 		<member name="hrtf_id" type="float" setter="set_hrtf_id" getter="get_hrtf_id" default="0.0">
+			What binaural model to use. With the "standard" installation, seven models [code]listen_irc_1008.sofa[/code] through [code]listen_irc_1053.sofa[/code] can found in [code]res://Anaglyph/anaglyph_plugin_data/[/code]. These seven are assigned the ids [code]0/6.0[/code], [code]1/6.0[/code], [code]2/6.0[/code] etc. Other values round to the closest id.
+			Personally, I'd recommend just trying them out and see which sounds best for your purposes.
+			[b]Note:[/b]: To go beyond the standard Anaglyph models and use other [code].sofa[/code] files, see [url=http://anaglyph.dalembert.upmc.fr/page-tutorials.html]the official documentation[/url]. This process requires a Matlab installation. Once you have set up your custom models, I'd recommend opening the VST/AU in your favourite DAW to select the model there, and copy its automation value over into this parameter. Be careful, as higher-end [code].sofa[/code] models may be [i]much[/i] heavier than the models Anaglyph provides.
 		</member>
 		<member name="max_attenuation" type="float" setter="set_max_attenuation" getter="get_max_attenuation" default="10.0">
+			The distance from which the binaural sound is quietest. A value between [code]0.1[/code] and [code]10[/code] meters.
+			[b]Note:[/b] [member min_attenuation] will be set to this value if this value goes below it.
 		</member>
 		<member name="min_attenuation" type="float" setter="set_min_attenuation" getter="get_min_attenuation" default="0.1">
+			The distance up to which the binaural sound is the loudest. A value between [code]0.1[/code] and [code]10[/code] meters.
+			[b]Note:[/b] [member max_attenuation] will be set to this value if this value goes above it.
 		</member>
 		<member name="responsiveness" type="float" setter="set_responsiveness" getter="get_responsiveness" default="0.04">
+			Responsiveness to position updates, as a value between [code]0.0[/code] and [code]1.0[/code]. Low values (such as [code]0.04[/code]) ensure responsiveness, while high values (such as [code]0.4[/code]) reduce crossfade artifacts.
 		</member>
 		<member name="reverb_EQ" type="Vector3" setter="set_reverb_EQ" getter="get_reverb_EQ" default="Vector3(0, 0, 0)">
+			Control the volume of the reverb over the low ([member Vector.x]), mid ([member Vector.y]), and high ([member Vector.z]) ranges. Each of these components is between [code]-40[/code] and [code]+15[/code]dB.
 		</member>
 		<member name="reverb_gain" type="float" setter="set_reverb_gain" getter="get_reverb_gain" default="0.0">
+			Overall volume of the reverb. A value between [code]-40[/code] and [code]+15[/code]dB.
 		</member>
 		<member name="reverb_type" type="int" setter="set_reverb_type" getter="get_reverb_type" enum="AnaglyphEffectData.AnaglyphReverbType" default="1">
+			What reverb type to use.
 		</member>
 		<member name="room_id" type="float" setter="set_room_id" getter="get_room_id" default="0.5">
+			What reverb model to use. With the "standard" installation, three models [code]room_01_studio_foley[/code], [code]room_02_studio_dry[/code], and [code]room_03_studio_warm[/code] can be found in [code]res://Anaglyph/anaglyph_plugin_data/[/code]. These three are assigned the ids [code]0/2.0[/code], [code]1/2.0[/code], and [code]2/2.0[/code]. Other values round to the closest id.
+			Personally, I'd recommend just trying them out and see which sounds best for your purposes.
+			[b]Note:[/b] Just like [member hrtf_id], you may be able to add more models. However, [i]you're on your own[/i]. Once you have set up your custom models, I'd recommend opening the VST/AU in your favourite DAW to select the model there, and copy its automation value over into this parameter.
 		</member>
 		<member name="use_custom_circumference" type="bool" setter="set_use_custom_circumference" getter="get_use_custom_circumference" default="false">
+			If [code]true[/code], uses the head circumference specified in [member head_circumference]. Otherwise, it will use the default value of the model.
 		</member>
 		<member name="wet" type="float" setter="set_wet" getter="get_wet" default="100.0">
+			A percentage [code]0.0[/code] to [code]100.0[/code]% that specifies how much of the signal is the original signal, and how much is the processed signal.
+			For instance, a percentage of [code]33.3[/code]% would be one part the processed sound, and two parts the original sound. The default value of [code]100[/code]% is the completely processed sound.
 		</member>
 	</members>
 	<constants>
