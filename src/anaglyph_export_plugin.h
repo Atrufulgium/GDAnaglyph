@@ -14,7 +14,7 @@ namespace godot {
 
 		String path;
 		
-		// Recursively copies everything from "source" dir to "target" dir.
+		// Recursively copy all non-.svg files from "source" to "target".
 		static Error copy_dir_absolute(const String& source, const String& target);
 
 		// Recursively deletes all .dll, .sofa, and .DS_Store files in a directory.

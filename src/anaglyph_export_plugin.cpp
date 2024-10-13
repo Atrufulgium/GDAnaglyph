@@ -52,6 +52,10 @@ Error AnaglyphExportPlugin::copy_dir_absolute(const String& source, const String
 
 	PackedStringArray files = DirAccess::get_files_at(source);
 	for (int i = 0; i < files.size(); i++) {
+		String ext = files[i].get_extension();
+		if (ext == "svg") {
+			continue;
+		}
 		String s = source + String("/") + files[i];
 		String t = target + String("/") + files[i];
 		res = DirAccess::copy_absolute(s, t);

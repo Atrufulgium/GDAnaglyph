@@ -3,8 +3,14 @@
 *.pdb
 *.dblite
 .vs/
-Anaglyph/
+# Don't include exported builds
+export/
+# Don't include the binaries from Anaglyph that can be downloaded from the homepage.
+**/Anaglyph/*
+!**/Anaglyph/AudioStreamPlayerAnaglyph.svg
+# Obviously don't include autogenned files
 godot-cpp/
+src/gen/doc_data.gen.cpp
 
 
 # Default godot gitignore:
@@ -59,4 +65,3 @@ mono_crash.*.json
 *.exe
 *.out
 *.app
-src/gen/doc_data.gen.cpp
