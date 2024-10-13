@@ -144,7 +144,10 @@
 			The [AudioStream] resource to be played. Setting this property stops the currently playing sounds.
 		</member>
 		<member name="stream_paused" type="bool" setter="set_stream_paused" getter="get_stream_paused" default="true">
-			If [code]true[/code], the playback is paused. You can resume it by setting [stream_paused] to [code]false[/code] again.
+			If [code]true[/code], the playback is paused. You can resume it by setting [member stream_paused] to [code]false[/code] again.
+		</member>
+		<member name="unit_size" type="float" setter="set_unit_size" getter="get_unit_size" default="1.0">
+			A distance factor. One meter equals [code]unit_size[/code] meters in the binaural processing or the fallback attenuation. This means higher values make the sound audible over a larger distance.
 		</member>
 		<member name="volume_db" type="float" setter="set_volume_db" getter="get_volume_db" default="0.0">
 			The base volume of the sound, in decibel.
@@ -161,10 +164,14 @@
 	</signals>
 	<constants>
 		<constant name="FORCE_NONE" value="0" enum="ForceStream">
+			Do not force binaural audio on or off.
 		</constant>
 		<constant name="FORCE_ANAGLYPH_ON" value="1" enum="ForceStream">
+			Try to force binaural audio on.
+			[b]Note:[/b] This may fail, for instance if buses run out.
 		</constant>
 		<constant name="FORCE_ANAGLYPH_OFF" value="2" enum="ForceStream">
+			Force binaural audio off.
 		</constant>
 	</constants>
 </class>

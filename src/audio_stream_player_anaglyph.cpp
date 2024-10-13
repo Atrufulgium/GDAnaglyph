@@ -22,6 +22,7 @@ AudioStreamPlayerAnaglyph::AudioStreamPlayerAnaglyph() {
 	//anaglyph_state.instantiate();
 	volume = 0;
 	gain_reduction_fallback = 6;
+	unit_size = 1;
 	pitch_scale = 1;
 	autoplay = false;
 	max_polyphony = 1;
@@ -115,7 +116,8 @@ void AudioStreamPlayerAnaglyph::_enter_tree() {
 		b->set_name("Fallback AudioStream");
 		add_child(b, true);
 		b->set_owner(scene_root);
-		b->set_unit_size(1);
+
+		copy_shared_properties();
 	}
 }
 
@@ -170,7 +172,15 @@ void AudioStreamPlayerAnaglyph::_process(double delta) {
 	}
 
 	// Get the anaglyph positional parameters
-	Vector3 polar = AnaglyphHelpers::calculate_polar_position(this, get_listener_node());
+	Node3D* camera = get_listener_node();
+	if (camera == nullptr) {
+		AnaglyphHelpers::print_warning("This scene has no 3D camera.\nThis AudioStreamPlayerAnaglyph has been removed from the scene.");
+		get_parent()->remove_child(this);
+		this->queue_free();
+		return;
+	}
+	Vector3 polar = AnaglyphHelpers::calculate_polar_position(this, camera);
+	polar.z /= unit_size;
 
 	// Decide whether to process Anaglyph or the fallback.
 	// Switching between Anaglyph and the fallback should be as smooth as
@@ -242,10 +252,13 @@ void AudioStreamPlayerAnaglyph::copy_shared_properties() {
 	players.anaglyph->set_volume_db(volume);
 	players.anaglyph->set_pitch_scale(pitch_scale);
 	players.anaglyph->set_autoplay(autoplay);
+	// (No anaglyph "set_unit_size"; we directly divide in this _process to
+	//  achieve that effect.)
 
 	players.fallback->set_volume_db(volume - gain_reduction_fallback);
 	players.fallback->set_pitch_scale(pitch_scale);
 	players.fallback->set_autoplay(autoplay);
+	players.fallback->set_unit_size(unit_size);
 }
 
 void AudioStreamPlayerAnaglyph::set_stream(Ref<AudioStream> p_audio_stream) {
@@ -279,6 +292,14 @@ void AudioStreamPlayerAnaglyph::set_gain_reduction_fallback_db(float reduction) 
 
 float AudioStreamPlayerAnaglyph::get_gain_reduction_fallback_db() const {
 	return gain_reduction_fallback;
+}
+
+void AudioStreamPlayerAnaglyph::set_unit_size(float meters) {
+	unit_size = CLAMP(meters, 0.01, 100);
+	copy_shared_properties();
+}
+float AudioStreamPlayerAnaglyph::get_unit_size() const {
+	return unit_size;
 }
 
 void AudioStreamPlayerAnaglyph::set_pitch_scale(float p_pitch_scale) {
@@ -531,6 +552,7 @@ void AudioStreamPlayerAnaglyph::_bind_methods() {
 	REGISTER(OBJECT, stream, AudioStreamPlayerAnaglyph, "stream", PROPERTY_HINT_RESOURCE_TYPE, "AudioStream");
 	REGISTER(FLOAT, volume_db, AudioStreamPlayerAnaglyph, "volume_db", PROPERTY_HINT_RANGE, "-80,24,suffix:dB");
 	REGISTER(FLOAT, gain_reduction_fallback_db, AudioStreamPlayerAnaglyph, "fallback_reduction_db", PROPERTY_HINT_RANGE, "0,80,suffix:dB");
+	REGISTER(FLOAT, unit_size, AudioStreamPlayerAnaglyph, "meters_per_unit", PROPERTY_HINT_RANGE, "0.01,100,0.01,suffix:m");
 	REGISTER(FLOAT, pitch_scale, AudioStreamPlayerAnaglyph, "pitch_scale", PROPERTY_HINT_RANGE, "0.01,4,0.01,or_greater");
 	ClassDB::bind_method(D_METHOD("is_playing"), &AudioStreamPlayerAnaglyph::get_playing);
 	ClassDB::bind_method(D_METHOD("set_playing", "enable"), &AudioStreamPlayerAnaglyph::set_playing);

@@ -53,6 +53,7 @@ namespace godot {
 		Ref<AudioStream> audio_stream;
 		float volume;
 		float gain_reduction_fallback;
+		float unit_size;
 		float pitch_scale;
 		bool autoplay;
 		int max_polyphony;
@@ -117,6 +118,9 @@ namespace godot {
 
 		void set_gain_reduction_fallback_db(float volume);
 		float get_gain_reduction_fallback_db() const;
+
+		void set_unit_size(float meters);
+		float get_unit_size() const;
 
 		void set_pitch_scale(float pitch_scale);
 		float get_pitch_scale() const;

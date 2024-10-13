@@ -95,12 +95,18 @@
 	</members>
 	<constants>
 		<constant name="ANAGLYPH_REVERB_OMNI" value="0" enum="AnaglyphReverbType">
+			Use only the "omni" channel (W) for reverb calculations.
+			This is the cheapest option.
 		</constant>
 		<constant name="ANAGLYPH_REVERB_2D" value="1" enum="AnaglyphReverbType">
+			Compared to [constant ANAGLYPH_REVERB_OMNI] (W), additionally use the horizontal plane (XY) for reverb calculations.
 		</constant>
 		<constant name="ANAGLYPH_REVERB_3D_1" value="2" enum="AnaglyphReverbType">
+			Compared to [constant ANAGLYPH_REVERB_2D] (WXY), additionally use height information (Z) for reverb calculations to get 1st-order ambisonics.
 		</constant>
 		<constant name="ANAGLYPH_REVERB_3D_2" value="3" enum="AnaglyphReverbType">
+			Compared to [constant ANAGLYPH_REVERB_3D_1] (WXYZ), use "double" the resolution to get 2nd-order ambisonics.
+			This is the most expensive option.
 		</constant>
 	</constants>
 </class>
