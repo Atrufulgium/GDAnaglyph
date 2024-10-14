@@ -11,5 +11,11 @@ config_version=5
 [application]
 
 config/name="Anaglyph"
+run/main_scene="res://scenes/room/room.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
 config/icon="res://icon.svg"
+
+[editor]
+
+movie_writer/movie_file="D:/Github/GDAnaglyph/demo/temp.avi"
+run/main_run_args="--verbose"

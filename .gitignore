@@ -11,6 +11,9 @@ export/
 # Obviously don't include autogenned files
 godot-cpp/
 src/gen/doc_data.gen.cpp
+# Don't include model textures... that'd be 80MB down the drain.
+/demo/scenes/room/3d/**.png
+/demo/scenes/room/3d/**.jpg
 
 
 # Default godot gitignore:
