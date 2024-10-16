@@ -1,4 +1,4 @@
-[gd_scene load_steps=71 format=4 uid="uid://ekxhvud363g3"]
+[gd_scene load_steps=81 format=4 uid="uid://ekxhvud363g3"]
 
 [ext_resource type="Material" uid="uid://irkr01wgbyc2" path="res://scenes/room/3d/planks_B_material.tres" id="1_u6eep"]
 [ext_resource type="Material" uid="uid://uktxo0k4e4wp" path="res://scenes/room/3d/door_material.tres" id="2_omftp"]
@@ -19,6 +19,7 @@
 [ext_resource type="Texture2D" uid="uid://b5ape7iqetm4q" path="res://scenes/room/3d/room_Image_1_13.png" id="17_tcdvs"]
 [ext_resource type="Texture2D" uid="uid://djgnn41nvuvek" path="res://scenes/room/3d/room_Image_2_12.png" id="18_cl46g"]
 [ext_resource type="Material" uid="uid://dbfgsht31b5vn" path="res://scenes/room/3d/sandstone_material.tres" id="19_njyv1"]
+[ext_resource type="Script" path="res://scenes/room/player.gd" id="20_ih2o8"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_46u22"]
 sky_top_color = Color(0.47, 0.348583, 0.1786, 1)
@@ -822,25 +823,52 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_ykmjr")
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_i1at5"]
+size = Vector3(8.6012, 0.295044, 3.74695)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gu641"]
+size = Vector3(1, 1.47742, 1.27142)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ko1mp"]
+size = Vector3(0.590332, 3.27422, 3.72412)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2dqii"]
+size = Vector3(0.590332, 3.27422, 3.72412)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5pdio"]
+size = Vector3(0.590332, 3.27422, 3.45605)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pygg1"]
+size = Vector3(0.590332, 3.27422, 1.45082)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fvna6"]
+size = Vector3(4.43286, 3.27422, 0.437744)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_weim0"]
+size = Vector3(4.43286, 3.27422, 0.437744)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_pyy6l"]
+radius = 0.3
+height = 1.73457
+
 [node name="Room" type="Node3D"]
 
-[node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.530742, 0, 0)
+[node name="WorldSettings" type="Node" parent="."]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="Camera3D"]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="WorldSettings"]
 environment = SubResource("Environment_haec0")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Camera3D"]
-transform = Transform3D(0.30033, -0.0560027, 0.95219, -0.0875403, 0.992443, 0.0859813, -0.94981, -0.109178, 0.293158, 2.81304, 1.05948, -0.916098)
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="WorldSettings"]
+transform = Transform3D(0.30033, -0.0560028, 0.95219, -0.0875403, 0.992443, 0.0859814, -0.94981, -0.109178, 0.293158, 2.2823, 1.05948, -0.916098)
 shadow_enabled = true
 shadow_bias = 0.0
 shadow_reverse_cull_face = true
 shadow_blur = 0.0
 
-[node name="room" type="Node3D" parent="."]
+[node name="Room" type="Node3D" parent="."]
 
-[node name="Fake bounce light" type="OmniLight3D" parent="room"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.52965, 0.899553, -1.77838)
+[node name="FakeIndirectLight" type="OmniLight3D" parent="Room"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.21799, 1.30435, -2.36807)
 light_color = Color(1, 0.949333, 0.92, 1)
 light_energy = 0.06
 shadow_enabled = true
@@ -850,33 +878,36 @@ shadow_blur = 5.0
 omni_range = 3.0
 omni_attenuation = 0.8
 
-[node name="door_handle_base" type="MeshInstance3D" parent="room"]
+[node name="RoomMeshes" type="Node3D" parent="Room"]
+transform = Transform3D(1.45, 0, 0, 0, 1.45, 0, 0, 0, 1.45, 0, 0, 0)
+
+[node name="door_handle_base" type="MeshInstance3D" parent="Room/RoomMeshes"]
 transform = Transform3D(0, 0, -1, -1, 0, 0, 0, 1, 0, 0, 0.664776, -0.352547)
 mesh = SubResource("ArrayMesh_d4p6i")
 skeleton = NodePath("")
 
-[node name="door_handle" type="MeshInstance3D" parent="room/door_handle_base"]
+[node name="door_handle" type="MeshInstance3D" parent="Room/RoomMeshes/door_handle_base"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0130562)
 mesh = SubResource("ArrayMesh_hehc1")
 skeleton = NodePath("")
 
-[node name="nails" type="MeshInstance3D" parent="room"]
+[node name="nails" type="MeshInstance3D" parent="Room/RoomMeshes"]
 transform = Transform3D(0.658004, 0, 0, 0, 0.658004, 0, 0, 0, 0.658004, -0.0394753, 1.15695, -1.52031)
 mesh = SubResource("ArrayMesh_xwuhp")
 skeleton = NodePath("")
 
-[node name="lantern_01" type="MeshInstance3D" parent="room"]
+[node name="lantern_01" type="MeshInstance3D" parent="Room/RoomMeshes"]
 transform = Transform3D(0.556998, 0, 0.830513, 0, 1, 0, -0.830513, 0, 0.556998, -1.63185, 0.0179734, -0.0884423)
 mesh = SubResource("ArrayMesh_vasxc")
 skeleton = NodePath("")
 
-[node name="glass" type="MeshInstance3D" parent="room/lantern_01"]
+[node name="glass" type="MeshInstance3D" parent="Room/RoomMeshes/lantern_01"]
 mesh = SubResource("ArrayMesh_efopf")
 skeleton = NodePath("")
 
-[node name="OmniLight3D" type="OmniLight3D" parent="room/lantern_01"]
+[node name="OmniLight3D" type="OmniLight3D" parent="Room/RoomMeshes/lantern_01"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0015167, 0.136208, 0.00101721)
-light_color = Color(1, 0.893651, 0.773627, 1)
+light_color = Color(1, 0.769478, 0.492993, 1)
 light_energy = 0.5
 light_size = 0.01
 shadow_enabled = true
@@ -887,230 +918,274 @@ shadow_blur = 0.0
 omni_range = 1.5
 omni_attenuation = 0.8
 
-[node name="old radio" type="Node3D" parent="room"]
+[node name="old radio" type="Node3D" parent="Room/RoomMeshes"]
 transform = Transform3D(0.0012804, 0.000395474, 0.00727054, 0.0004937, 0.0073604, -0.000487306, -0.00726453, 0.000569918, 0.00124834, -3.00139, 0.572179, -0.478135)
 
-[node name="casing" type="MeshInstance3D" parent="room/old radio"]
+[node name="casing" type="MeshInstance3D" parent="Room/RoomMeshes/old radio"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.4877, -9.59781, -2.16026)
 mesh = SubResource("ArrayMesh_0fw3m")
 skeleton = NodePath("")
 
-[node name="front" type="MeshInstance3D" parent="room/old radio"]
+[node name="front" type="MeshInstance3D" parent="Room/RoomMeshes/old radio"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.36442e-06, -1.23978e-05, 3.91006e-05)
 mesh = SubResource("ArrayMesh_7ivyq")
 skeleton = NodePath("")
 
-[node name="knobs, vents" type="MeshInstance3D" parent="room/old radio"]
+[node name="knobs, vents" type="MeshInstance3D" parent="Room/RoomMeshes/old radio"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.04457, -4.35352, -2.32737)
 mesh = SubResource("ArrayMesh_7cmd5")
 skeleton = NodePath("")
 
-[node name="can" type="MeshInstance3D" parent="room"]
+[node name="can" type="MeshInstance3D" parent="Room/RoomMeshes"]
 transform = Transform3D(0.240948, -0.0401323, 0.473697, -0.0702059, 0.522239, 0.0799553, -0.470181, -0.098545, 0.230811, -3.1036, 0.56452, -0.922738)
 mesh = SubResource("ArrayMesh_e1ysc")
 skeleton = NodePath("")
 
-[node name="can rim" type="MeshInstance3D" parent="room/can"]
+[node name="can rim" type="MeshInstance3D" parent="Room/RoomMeshes/can"]
 mesh = SubResource("ArrayMesh_nb7vm")
 skeleton = NodePath("")
 
-[node name="can2" type="MeshInstance3D" parent="room"]
+[node name="can2" type="MeshInstance3D" parent="Room/RoomMeshes"]
 transform = Transform3D(0.524351, 0.0954515, 0, -0.0954515, 0.524351, 0, 0, 0, 0.532968, -2.97166, 0.502002, -0.740577)
 mesh = SubResource("ArrayMesh_e1ysc")
 skeleton = NodePath("")
 
-[node name="can rim" type="MeshInstance3D" parent="room/can2"]
+[node name="can rim" type="MeshInstance3D" parent="Room/RoomMeshes/can2"]
 mesh = SubResource("ArrayMesh_nb7vm")
 skeleton = NodePath("")
 
-[node name="can3" type="MeshInstance3D" parent="room"]
+[node name="can3" type="MeshInstance3D" parent="Room/RoomMeshes"]
 transform = Transform3D(-0.31934, 0.0300256, -0.425647, 0.063595, 0.529058, -0.0103916, 0.421939, -0.0570155, -0.32058, -3.01249, 0.502002, -0.70061)
 mesh = SubResource("ArrayMesh_e1ysc")
 skeleton = NodePath("")
 
-[node name="can rim" type="MeshInstance3D" parent="room/can3"]
+[node name="can rim" type="MeshInstance3D" parent="Room/RoomMeshes/can3"]
 mesh = SubResource("ArrayMesh_nb7vm")
 skeleton = NodePath("")
 
-[node name="wooden_produce_crate" type="MeshInstance3D" parent="room"]
+[node name="wooden_produce_crate" type="MeshInstance3D" parent="Room/RoomMeshes"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.385442, 0.0186306, -1.53766)
 mesh = SubResource("ArrayMesh_l2vhr")
 skeleton = NodePath("")
 
-[node name="bottle" type="MeshInstance3D" parent="room/wooden_produce_crate"]
+[node name="bottle" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate"]
 transform = Transform3D(1.2162, 0, 0, 0, 1.2162, 0, 0, 0, 1.2162, -0.147046, 0.00903416, -0.0920793)
 mesh = SubResource("ArrayMesh_icw6y")
 skeleton = NodePath("")
 
-[node name="lid" type="MeshInstance3D" parent="room/wooden_produce_crate/bottle"]
+[node name="lid" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate/bottle"]
 mesh = SubResource("ArrayMesh_duh2e")
 skeleton = NodePath("")
 
-[node name="bottle2" type="MeshInstance3D" parent="room/wooden_produce_crate"]
+[node name="bottle2" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate"]
 transform = Transform3D(1.2162, 0, 0, 0, 1.2162, 0, 0, 0, 1.2162, -0.147046, 0.00903416, 0.0689769)
 mesh = SubResource("ArrayMesh_icw6y")
 skeleton = NodePath("")
 
-[node name="lid" type="MeshInstance3D" parent="room/wooden_produce_crate/bottle2"]
+[node name="lid" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate/bottle2"]
 mesh = SubResource("ArrayMesh_duh2e")
 skeleton = NodePath("")
 
-[node name="bottle3" type="MeshInstance3D" parent="room/wooden_produce_crate"]
+[node name="bottle3" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate"]
 transform = Transform3D(1.2162, 0, 0, 0, 1.2162, 0, 0, 0, 1.2162, -0.00366375, 0.00903416, -0.0920793)
 mesh = SubResource("ArrayMesh_icw6y")
 skeleton = NodePath("")
 
-[node name="lid" type="MeshInstance3D" parent="room/wooden_produce_crate/bottle3"]
+[node name="lid" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate/bottle3"]
 mesh = SubResource("ArrayMesh_duh2e")
 skeleton = NodePath("")
 
-[node name="bottle4" type="MeshInstance3D" parent="room/wooden_produce_crate"]
+[node name="bottle4" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate"]
 transform = Transform3D(1.2162, 0, 0, 0, 1.2162, 0, 0, 0, 1.2162, -0.00366375, 0.00903416, 0.0689769)
 mesh = SubResource("ArrayMesh_icw6y")
 skeleton = NodePath("")
 
-[node name="lid" type="MeshInstance3D" parent="room/wooden_produce_crate/bottle4"]
+[node name="lid" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate/bottle4"]
 mesh = SubResource("ArrayMesh_duh2e")
 skeleton = NodePath("")
 
-[node name="bottle5" type="MeshInstance3D" parent="room/wooden_produce_crate"]
+[node name="bottle5" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate"]
 transform = Transform3D(1.2162, 0, 0, 0, 1.2162, 0, 0, 0, 1.2162, 0.143423, 0.00903416, -0.0920793)
 mesh = SubResource("ArrayMesh_icw6y")
 skeleton = NodePath("")
 
-[node name="lid" type="MeshInstance3D" parent="room/wooden_produce_crate/bottle5"]
+[node name="lid" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate/bottle5"]
 mesh = SubResource("ArrayMesh_duh2e")
 skeleton = NodePath("")
 
-[node name="bottle6" type="MeshInstance3D" parent="room/wooden_produce_crate"]
+[node name="bottle6" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate"]
 transform = Transform3D(1.2162, 0, 0, 0, 1.2162, 0, 0, 0, 1.2162, 0.143423, 0.00903416, 0.0689769)
 mesh = SubResource("ArrayMesh_icw6y")
 skeleton = NodePath("")
 
-[node name="lid" type="MeshInstance3D" parent="room/wooden_produce_crate/bottle6"]
+[node name="lid" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate/bottle6"]
 mesh = SubResource("ArrayMesh_duh2e")
 skeleton = NodePath("")
 
-[node name="wooden_produce_crate2" type="MeshInstance3D" parent="room"]
+[node name="wooden_produce_crate2" type="MeshInstance3D" parent="Room/RoomMeshes"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.385442, 0.0186306, -1.06682)
 mesh = SubResource("ArrayMesh_l2vhr")
 skeleton = NodePath("")
 
-[node name="bottle" type="MeshInstance3D" parent="room/wooden_produce_crate2"]
+[node name="bottle" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate2"]
 transform = Transform3D(1.2162, 0, 0, 0, 1.2162, 0, 0, 0, 1.2162, -0.147046, 0.00903416, -0.0920793)
 mesh = SubResource("ArrayMesh_icw6y")
 skeleton = NodePath("")
 
-[node name="lid" type="MeshInstance3D" parent="room/wooden_produce_crate2/bottle"]
+[node name="lid" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate2/bottle"]
 mesh = SubResource("ArrayMesh_duh2e")
 skeleton = NodePath("")
 
-[node name="bottle2" type="MeshInstance3D" parent="room/wooden_produce_crate2"]
+[node name="bottle2" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate2"]
 transform = Transform3D(1.2162, 0, 0, 0, 1.2162, 0, 0, 0, 1.2162, -0.147046, 0.00903416, 0.0689769)
 mesh = SubResource("ArrayMesh_icw6y")
 skeleton = NodePath("")
 
-[node name="lid" type="MeshInstance3D" parent="room/wooden_produce_crate2/bottle2"]
+[node name="lid" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate2/bottle2"]
 mesh = SubResource("ArrayMesh_duh2e")
 skeleton = NodePath("")
 
-[node name="bottle3" type="MeshInstance3D" parent="room/wooden_produce_crate2"]
+[node name="bottle3" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate2"]
 transform = Transform3D(1.2162, 0, 0, 0, 1.2162, 0, 0, 0, 1.2162, -0.00366375, 0.00903416, -0.0920793)
 mesh = SubResource("ArrayMesh_icw6y")
 skeleton = NodePath("")
 
-[node name="lid" type="MeshInstance3D" parent="room/wooden_produce_crate2/bottle3"]
+[node name="lid" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate2/bottle3"]
 mesh = SubResource("ArrayMesh_duh2e")
 skeleton = NodePath("")
 
-[node name="bottle5" type="MeshInstance3D" parent="room/wooden_produce_crate2"]
+[node name="bottle5" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate2"]
 transform = Transform3D(1.2162, 0, 0, 0, 1.2162, 0, 0, 0, 1.2162, 0.143423, 0.00903416, -0.0920793)
 mesh = SubResource("ArrayMesh_icw6y")
 skeleton = NodePath("")
 
-[node name="lid" type="MeshInstance3D" parent="room/wooden_produce_crate2/bottle5"]
+[node name="lid" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate2/bottle5"]
 mesh = SubResource("ArrayMesh_duh2e")
 skeleton = NodePath("")
 
-[node name="wooden_produce_crate3" type="MeshInstance3D" parent="room"]
-transform = Transform3D(0.26971, 0, -0.962942, 0, 1, 0, 0.962942, 0, 0.26971, -0.385442, 0.307166, -1.39954)
+[node name="wooden_produce_crate3" type="MeshInstance3D" parent="Room/RoomMeshes"]
+transform = Transform3D(0.26971, 0, -0.962942, 0, 1, 0, 0.962942, 0, 0.26971, -0.385442, 0.322997, -1.39954)
 mesh = SubResource("ArrayMesh_l2vhr")
 skeleton = NodePath("")
 
-[node name="bottle" type="MeshInstance3D" parent="room/wooden_produce_crate3"]
+[node name="bottle" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate3"]
 transform = Transform3D(1.2162, 0, 0, 0, 1.2162, 0, 0, 0, 1.2162, -0.147046, 0.00903416, -0.0920793)
 mesh = SubResource("ArrayMesh_icw6y")
 skeleton = NodePath("")
 
-[node name="lid" type="MeshInstance3D" parent="room/wooden_produce_crate3/bottle"]
+[node name="lid" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate3/bottle"]
 mesh = SubResource("ArrayMesh_duh2e")
 skeleton = NodePath("")
 
-[node name="bottle4" type="MeshInstance3D" parent="room/wooden_produce_crate3"]
+[node name="bottle4" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate3"]
 transform = Transform3D(1.2162, 0, 0, 0, 1.2162, 0, 0, 0, 1.2162, -0.00366375, 0.00903416, 0.0689769)
 mesh = SubResource("ArrayMesh_icw6y")
 skeleton = NodePath("")
 
-[node name="lid" type="MeshInstance3D" parent="room/wooden_produce_crate3/bottle4"]
+[node name="lid" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate3/bottle4"]
 mesh = SubResource("ArrayMesh_duh2e")
 skeleton = NodePath("")
 
-[node name="bottle5" type="MeshInstance3D" parent="room/wooden_produce_crate3"]
+[node name="bottle5" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate3"]
 transform = Transform3D(1.2162, 0, 0, 0, 1.2162, 0, 0, 0, 1.2162, 0.143423, 0.00903416, -0.0920793)
 mesh = SubResource("ArrayMesh_icw6y")
 skeleton = NodePath("")
 
-[node name="lid" type="MeshInstance3D" parent="room/wooden_produce_crate3/bottle5"]
+[node name="lid" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate3/bottle5"]
 mesh = SubResource("ArrayMesh_duh2e")
 skeleton = NodePath("")
 
-[node name="bottle6" type="MeshInstance3D" parent="room/wooden_produce_crate3"]
+[node name="bottle6" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate3"]
 transform = Transform3D(1.2162, 0, 0, 0, 1.2162, 0, 0, 0, 1.2162, 0.143423, 0.00903416, 0.0689769)
 mesh = SubResource("ArrayMesh_icw6y")
 skeleton = NodePath("")
 
-[node name="lid" type="MeshInstance3D" parent="room/wooden_produce_crate3/bottle6"]
+[node name="lid" type="MeshInstance3D" parent="Room/RoomMeshes/wooden_produce_crate3/bottle6"]
 mesh = SubResource("ArrayMesh_duh2e")
 skeleton = NodePath("")
 
-[node name="axe" type="MeshInstance3D" parent="room"]
+[node name="axe" type="MeshInstance3D" parent="Room/RoomMeshes"]
 transform = Transform3D(0.714147, 0.35379, 0.60401, 0.361182, -0.925379, 0.114987, 0.599619, 0.13604, -0.788638, -2.6415, 0.186964, -1.5395)
 mesh = SubResource("ArrayMesh_6ho01")
 skeleton = NodePath("")
 
-[node name="the wooden part" type="MeshInstance3D" parent="room/axe"]
+[node name="the wooden part" type="MeshInstance3D" parent="Room/RoomMeshes/axe"]
 mesh = SubResource("ArrayMesh_1au1k")
 skeleton = NodePath("")
 
-[node name="sleeping bag" type="MeshInstance3D" parent="room"]
+[node name="sleeping bag" type="MeshInstance3D" parent="Room/RoomMeshes"]
 transform = Transform3D(0.00812804, 0.00993668, 0.0179929, 4.66015e-05, -0.0193575, 0.0106692, 0.0205544, -0.00388548, -0.00713934, -2.76369, 0.261066, -0.207407)
 mesh = SubResource("ArrayMesh_wwuea")
 skeleton = NodePath("")
 
-[node name="Wood (verneukt met _008)" type="MeshInstance3D" parent="room"]
+[node name="Wood (verneukt met _008)" type="MeshInstance3D" parent="Room/RoomMeshes"]
 mesh = SubResource("ArrayMesh_2hl2m")
 skeleton = NodePath("")
 
-[node name="Cave walls" type="MeshInstance3D" parent="room"]
+[node name="Cave walls" type="MeshInstance3D" parent="Room/RoomMeshes"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.981579, 0, -0.849317)
 mesh = SubResource("ArrayMesh_ru13b")
 skeleton = NodePath("")
 
-[node name="Door" type="MeshInstance3D" parent="room"]
+[node name="Door" type="MeshInstance3D" parent="Room/RoomMeshes"]
 transform = Transform3D(0.696028, 0, 0, 0, 0.696028, 0, 0, 0, 0.986307, 0, 0, -0.557377)
 mesh = SubResource("ArrayMesh_jivfq")
 skeleton = NodePath("")
 
-[node name="Broken glass" type="MeshInstance3D" parent="room"]
+[node name="Broken glass" type="MeshInstance3D" parent="Room/RoomMeshes"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.965599, -1.31705)
 mesh = SubResource("ArrayMesh_6da0t")
 skeleton = NodePath("")
 
-[node name="Fill gaps" type="MeshInstance3D" parent="room"]
+[node name="Fill gaps" type="MeshInstance3D" parent="Room/RoomMeshes"]
 transform = Transform3D(0.696028, 0, 0, 0, 0.696028, 0, 0, 0, 0.986307, 0.0262169, 0, -0.557377)
 mesh = SubResource("ArrayMesh_qfmuw")
 skeleton = NodePath("")
 
-[node name="Darker wood" type="MeshInstance3D" parent="room"]
+[node name="Darker wood" type="MeshInstance3D" parent="Room/RoomMeshes"]
 mesh = SubResource("ArrayMesh_sc73n")
 skeleton = NodePath("")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Room"]
+
+[node name="FloorShape" type="CollisionShape3D" parent="Room/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.942586, -0.1188, -0.987854)
+shape = SubResource("BoxShape3D_i1at5")
+
+[node name="Boxes" type="CollisionShape3D" parent="Room/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.446805, 0.119908, -1.87634)
+shape = SubResource("BoxShape3D_gu641")
+
+[node name="WallPositiveX" type="CollisionShape3D" parent="Room/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.204834, 1.13711, -1.36206)
+shape = SubResource("BoxShape3D_ko1mp")
+
+[node name="WallNegativeX" type="CollisionShape3D" parent="Room/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.43399, 1.13711, -1.36206)
+shape = SubResource("BoxShape3D_2dqii")
+
+[node name="WallNegativeX2" type="CollisionShape3D" parent="Room/StaticBody3D"]
+transform = Transform3D(0.582506, 0, -0.812826, 0, 1, 0, 0.812826, 0, 0.582506, -4.10077, 1.13711, -2.39229)
+shape = SubResource("BoxShape3D_5pdio")
+
+[node name="WallNegativeX3" type="CollisionShape3D" parent="Room/StaticBody3D"]
+transform = Transform3D(0.61705, 0, 0.786924, 0, 1, 0, -0.786924, 0, 0.61705, -4.07321, 1.13711, 0.00108501)
+shape = SubResource("BoxShape3D_pygg1")
+
+[node name="WallPositiveZ" type="CollisionShape3D" parent="Room/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.71643, 1.13711, 0.307796)
+shape = SubResource("BoxShape3D_fvna6")
+
+[node name="WallNegativeZ" type="CollisionShape3D" parent="Room/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.71643, 1.13711, -2.79044)
+shape = SubResource("BoxShape3D_weim0")
+
+[node name="Player" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.53724, 0.999235, -0.357007)
+script = ExtResource("20_ih2o8")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+shape = SubResource("CapsuleShape3D_pyy6l")
+
+[node name="Camera3D" type="Camera3D" parent="Player"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.518719, -0.198232)

@@ -35,7 +35,7 @@ The following license applies to all files not listed below.
 
 The following license is due to Anaglyph. (All of `./demo/Anaglyph` except for `./demo/Anaglyph/AudioStreamPlayerAnaglyph.svg`.) See [their homepage](http://anaglyph.dalembert.upmc.fr/).
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anaglyph (c) D. Poirier-Quinot and B. F.G. Katz (Licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))
+&nbsp;&nbsp;&nbsp;&nbsp;Anaglyph (c) D. Poirier-Quinot and B. F.G. Katz (Licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))
 
 &nbsp;
 
@@ -114,11 +114,11 @@ All textures not listed below are also licensed under [CC0](https://creativecomm
 The following license is due to the 3d radio model. See its [SketchFab page](https://sketchfab.com/3d-models/old-radio-60279aff8aae432a9933b9fb6374c2f1).  
 This includes some of the files in `./demo/scenes/room/3d`.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Old Radio (c) gorzi (Licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))
+&nbsp;&nbsp;&nbsp;&nbsp;Old Radio (c) gorzi (Licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))
 
 &nbsp;
 
 The following license is due to the 3d sleeping bag model. See its [SketchFab page](https://sketchfab.com/3d-models/camping-sleeping-bag-d2ab6e8a8ffc472e9fca8b920662dafe).  
 This includes some of the files in `./demo/scenes/room/3d`.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Camping sleeping bag (c) Fochdog (Licensed under  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))
+&nbsp;&nbsp;&nbsp;&nbsp;Camping sleeping bag (c) Fochdog (Licensed under  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))
