@@ -14,6 +14,9 @@ src/gen/doc_data.gen.cpp
 # Don't include model textures... that'd be 80MB down the drain.
 /demo/scenes/room/3d/**.png
 /demo/scenes/room/3d/**.jpg
+# Leeeet's... not include audio. Also a nice storage hog
+**.ogg
+**.wav
 
 
 # Default godot gitignore:

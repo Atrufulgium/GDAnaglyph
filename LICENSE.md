@@ -107,18 +107,19 @@ Demo resource licenses
 ----------------------
 
 All 3d models not listed below are licensed under [CC0](https://creativecommons.org/publicdomain/zero/1.0/), and either original, or from [thebasemesh.com](https://www.thebasemesh.com).  
-All textures not listed below are also licensed under [CC0](https://creativecommons.org/publicdomain/zero/1.0/), and either original, or from [cc0-textures.com](https://cc0-textures.com/).
+All textures not listed below are also licensed under [CC0](https://creativecommons.org/publicdomain/zero/1.0/), and either original, or from [cc0-textures.com](https://cc0-textures.com/).  
+All audio not listed below is also licensed under [CC0](https://creativecommons.org/publicdomain/zero/1.0/), and either original, or from [freesound.org](https://freesound.org).  
 
 &nbsp;
 
 The following license is due to the 3d radio model. See its [SketchFab page](https://sketchfab.com/3d-models/old-radio-60279aff8aae432a9933b9fb6374c2f1).  
-This includes some of the files in `./demo/scenes/room/3d`.
+This includes some of the textures in `./demo/scenes/room/3d`.
 
 &nbsp;&nbsp;&nbsp;&nbsp;Old Radio (c) gorzi (Licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))
 
 &nbsp;
 
 The following license is due to the 3d sleeping bag model. See its [SketchFab page](https://sketchfab.com/3d-models/camping-sleeping-bag-d2ab6e8a8ffc472e9fca8b920662dafe).  
-This includes some of the files in `./demo/scenes/room/3d`.
+This includes some of the textures in `./demo/scenes/room/3d`.
 
-&nbsp;&nbsp;&nbsp;&nbsp;Camping sleeping bag (c) Fochdog (Licensed under  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))
+&nbsp;&nbsp;&nbsp;&nbsp;Camping sleeping bag (c) Fochdog (Licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))

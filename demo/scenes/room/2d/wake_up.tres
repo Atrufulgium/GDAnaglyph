@@ -1,0 +1,8 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://dknc2dd21bfjn"]
+
+[ext_resource type="Shader" path="res://scenes/room/2d/transition.gdshader" id="1_7anrp"]
+
+[resource]
+shader = ExtResource("1_7anrp")
+shader_parameter/progress = 0.0
+shader_parameter/color = Color(0, 0, 0, 1)

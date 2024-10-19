@@ -88,10 +88,10 @@ namespace godot {
 		AudioStreamPlayerAnaglyph();
 		~AudioStreamPlayerAnaglyph();
 
-		PackedStringArray _get_configuration_warnings() const override;
-		void _enter_tree() override;
-		void _ready() override;
-		void _process(double delta) override;
+		virtual PackedStringArray _get_configuration_warnings() const override;
+		virtual void _enter_tree() override;
+		virtual void _ready() override;
+		virtual void _process(double delta) override;
 
 		// These have a bunch of special behaviour, so delegate them to the
 		// child players without keeping track locally.

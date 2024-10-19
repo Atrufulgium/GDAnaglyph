@@ -90,7 +90,7 @@
 			<param index="0" name="count" type="int" />
 			<description>
 				The maximum number of AudioStreamPlayerAnaglyphs that may play binaural audio simultaneously, before the fallback is used.
-				Binaural processing is much heavier than regular processing. A good rule of thumb is to assume 2ms per [AnaglyphEffect] per frame.
+				Binaural processing (especially with reverb) is much heavier than regular processing. A good rule of thumb is to assume 2ms per [AnaglyphEffect] per frame with default settings. Disabling reverb entirely reduces this to approximately 0.5ms instead.
 				The default value is [code]4[/code].
 			</description>
 		</method>
