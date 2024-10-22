@@ -1112,7 +1112,6 @@ omni_attenuation = 0.8
 
 [node name="old radio" type="Node3D" parent="Room/RoomMeshes"]
 transform = Transform3D(0.0012804, 0.000395474, 0.00727054, 0.0004937, 0.0073604, -0.000487306, -0.00726453, 0.000569918, 0.00124834, -3.00139, 0.572179, -0.478135)
-script = ExtResource("18_1n4ks")
 
 [node name="casing" type="MeshInstance3D" parent="Room/RoomMeshes/old radio"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.4877, -9.59781, -2.16026)
@@ -1135,6 +1134,7 @@ stream_paused = false
 bus = &"Radio"
 anaglyph_data = SubResource("AnaglyphEffectData_sywxs")
 dupe_protection = false
+script = ExtResource("18_1n4ks")
 
 [node name="Anaglyph AudioStream" type="AudioStreamPlayer" parent="Room/RoomMeshes/old radio/AudioStreamPlayerAnaglyph"]
 stream = ExtResource("17_gqo87")
@@ -1492,16 +1492,7 @@ offset_right = 20.0
 offset_bottom = 40.0
 grow_horizontal = 2
 
-[node name="TextureRect" type="TextureRect" parent="Control"]
-material = ExtResource("33_nnfgr")
-layout_mode = 0
-offset_left = -556.0
-offset_right = 596.0
-offset_bottom = 648.0
-texture = ExtResource("34_wtdrp")
-expand_mode = 2
-
-[node name="RichTextLabel" type="RichTextLabel" parent="Control"]
+[node name="AnaglyphStatus" type="RichTextLabel" parent="Control"]
 layout_mode = 0
 offset_left = -202.0
 offset_top = 74.0
@@ -1515,3 +1506,24 @@ anaglyph_on_bb = "[font_size=48]Anaglyph: [color=green]Enabled[/color][/font_siz
 [center][font_size=25]Requires headphones or earphones."
 anaglyph_off_bb = "[font_size=48]Anaglyph: [color=red]Disabled[/color][/font_size]
 [center][font_size=25]The regular [color=gray]AudioStreamPlayer3D[/color]."
+
+[node name="Controls" type="RichTextLabel" parent="Control"]
+layout_mode = 0
+offset_left = -553.0
+offset_top = 532.0
+offset_right = -109.0
+offset_bottom = 644.0
+bbcode_enabled = true
+text = "[font_size=20]Shift: Crouch
+Q: Toggle Anaglyph
+WASD: Move around
+Mouse: Look around"
+
+[node name="Blink" type="TextureRect" parent="Control"]
+material = ExtResource("33_nnfgr")
+layout_mode = 0
+offset_left = -556.0
+offset_right = 596.0
+offset_bottom = 648.0
+texture = ExtResource("34_wtdrp")
+expand_mode = 2

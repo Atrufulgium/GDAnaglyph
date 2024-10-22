@@ -26,6 +26,7 @@ func _process(delta: float) -> void:
 	anim_progress += delta
 	
 	# Between 1s and 6s: increase volume from unhearable to regular
+	# (This is enough time for Anaglyph to have loaded the model)
 	AudioServer.set_bus_volume_db(0, lerp(-80, 0, clamp((anim_progress - 1) / 5, 0, 1)**0.5))
 	# Between 5s and 7s: open eyes
 	wake_up_material.set_shader_parameter("progress", clamp((anim_progress - 5) / 2, 0, 1))

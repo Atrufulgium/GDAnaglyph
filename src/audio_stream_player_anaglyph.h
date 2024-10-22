@@ -79,19 +79,23 @@ namespace godot {
 
 		void finish_signal();
 
+		bool try_add_children();
+		void enter_tree();
+		void ready();
+		void process();
+
 	protected:
 		static void _bind_methods();
 
 		void _validate_property(PropertyInfo& p_property) const;
 
+		void _notification(int what);
+
 	public:
 		AudioStreamPlayerAnaglyph();
 		~AudioStreamPlayerAnaglyph();
 
-		virtual PackedStringArray _get_configuration_warnings() const override;
-		virtual void _enter_tree() override;
-		virtual void _ready() override;
-		virtual void _process(double delta) override;
+		PackedStringArray _get_configuration_warnings() const override;
 
 		// These have a bunch of special behaviour, so delegate them to the
 		// child players without keeping track locally.

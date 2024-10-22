@@ -33,6 +33,8 @@ AudioStreamPlayerAnaglyph::AudioStreamPlayerAnaglyph() {
 
 	dupe_protection = true;
 	delete_on_finish = false;
+
+	set_process_internal(true);
 }
 
 AudioStreamPlayerAnaglyph::~AudioStreamPlayerAnaglyph() {
@@ -76,6 +78,18 @@ bool AudioStreamPlayerAnaglyph::get_players_runtime(AudioStreamPlayerAnaglyph::P
 	return get_players(players);
 }
 
+void AudioStreamPlayerAnaglyph::_notification(int what) {
+	if (what == NOTIFICATION_READY) {
+		ready();
+	}
+	else if (what == NOTIFICATION_ENTER_TREE) {
+		enter_tree();
+	}
+	else if (what == NOTIFICATION_INTERNAL_PROCESS) {
+		process();
+	}
+}
+
 PackedStringArray AudioStreamPlayerAnaglyph::_get_configuration_warnings() const {
 	PackedStringArray warnings = Node3D::_get_configuration_warnings();
 
@@ -101,27 +115,38 @@ Node3D* AudioStreamPlayerAnaglyph::get_listener_node() const {
 	return active_camera;
 }
 
-void AudioStreamPlayerAnaglyph::_enter_tree() {
+bool AudioStreamPlayerAnaglyph::try_add_children() {
 	Players players = Players{};
 
 	if (!get_players(players) && get_child_count() == 0) {
-		Node* scene_root = get_tree()->get_edited_scene_root();
-
 		AudioStreamPlayer* a = memnew(AudioStreamPlayer);
 		a->set_name("Anaglyph AudioStream");
 		add_child(a, true);
-		a->set_owner(scene_root);
 		
 		AudioStreamPlayer3D* b = memnew(AudioStreamPlayer3D);
 		b->set_name("Fallback AudioStream");
 		add_child(b, true);
-		b->set_owner(scene_root);
 
 		copy_shared_properties();
+		return true;
+	}
+	return false;
+}
+
+void AudioStreamPlayerAnaglyph::enter_tree() {
+	Players players = Players{};
+
+	if (!get_players(players) && get_child_count() == 0) {
+		try_add_children();
+	}
+	if (get_players(players)) {
+		Node* scene_root = get_tree()->get_edited_scene_root();
+		players.anaglyph->set_owner(scene_root);
+		players.fallback->set_owner(scene_root);
 	}
 }
 
-void AudioStreamPlayerAnaglyph::_ready() {
+void AudioStreamPlayerAnaglyph::ready() {
 	// Only run when playing.
 	if (Engine::get_singleton()->is_editor_hint()) {
 		return;
@@ -131,8 +156,16 @@ void AudioStreamPlayerAnaglyph::_ready() {
 		runtime_players = Players{};
 		AnaglyphHelpers::print_warning("Malformed tree structure in AudioStreamPlayerAnaglyph.\nIt has been removed from the tree, please fix it in the editor.\n(It requires two children, an AudioStreamPlayer for Anaglyph, and a fallback AudioStreamPlayer3D.)");
 		return_anaglyph();
-		get_parent()->remove_child(this);
-		return;
+		Node* parent = get_parent();
+		if (parent != nullptr || true) {
+			parent->remove_child(this);
+		}
+			return;
+	}
+
+	if (anaglyph_data == nullptr) {
+		AnaglyphHelpers::print_warning("Your AudioStreamPlayerAnaglyph \"", get_name(), " \"has `anaglyph_data` null. Using default data, but please set it yourself.");
+		anaglyph_data = Ref<AnaglyphEffectData>(memnew(AnaglyphEffectData));
 	}
 
 	// Duplicate resources create the problem of "only one position gets set, and
@@ -154,7 +187,7 @@ void AudioStreamPlayerAnaglyph::_ready() {
 	}
 }
 
-void AudioStreamPlayerAnaglyph::_process(double delta) {
+void AudioStreamPlayerAnaglyph::process() {
 	// Only run when playing.
 	if (Engine::get_singleton()->is_editor_hint()) {
 		return;
