@@ -21,7 +21,6 @@ gdscript/warnings/integer_division=0
 
 [editor]
 
-movie_writer/movie_file="D:/Github/GDAnaglyph/demo/temp.avi"
 run/main_run_args="--verbose"
 
 [input]
