@@ -23,7 +23,7 @@ Getting started
 ===============
 To get started, go to the [releases](https://github.com/Atrufulgium/GDAnaglyph/releases) and grab the one you need:
 1. The `demo-windows-v0.1.zip` file contains the full sample project, including all assets.
-2. The `gdanaglyph-v0.1.zip` file contains just the basic resources, and can be merged into a new or existing project.
+2. The `gdanaglyph-windows-v0.1.zip` file contains just the basic resources, and can be merged into a new or existing project.
 
 `demo-windows-v0.1.zip`
 -----------------------
@@ -38,7 +38,17 @@ The organization of the demo project is pretty ad-hoc and hacked together, but t
 
 Feel free to just play around in here!
 
-`gdanaglyph-v0.1.zip`
+Note that the first time you open the project, you may see some errors in the console:
+```
+  modules/gdscript/gdscript_compiler.cpp:123 - GDScript bug: Native class "AnaglyphEffectData" not found.
+  modules/gdscript/gdscript_compiler.cpp:123 - GDScript bug: Native class "AnaglyphEffectData" not found.
+  modules/gdscript/gdscript_compiler.cpp:123 - GDScript bug: Native class "AudioStreamPlayerAnaglyph" not found.
+  modules/gdscript/gdscript_compiler.cpp:123 - GDScript bug: Native class "AudioStreamPlayerAnaglyph" not found.
+  modules/gdscript/gdscript_compiler.cpp:123 - GDScript bug: Native class "AudioStreamPlayerAnaglyph" not found.
+```
+These can be ignored -- everything works fine.
+
+`gdanaglyph-windows-v0.1.zip`
 ---------------------
 To put GDAnaglyph into a new or existing project, the `Anaglyph` and `bin` folders inside the zip have to be merged into your project folder (so that you have folders `res://Anaglyph` and `res://bin` in your project). If Godot was open, restart it.
 
@@ -143,7 +153,7 @@ res://Anaglyph
     |- .DS_Store
     '- (all .sofa files)
 ```
-If you get this error in-editor, please double-check the file structure inside `res://Anaglyph` is the same as in `gdanaglyph-v0.1.zip`'s `Anaglyph` folder. If you don't get this error in-editor, but your *exported* games get this error, I've messed up (the `anaglyph_export_plugin.h` and `anaglyph_export_plugin.cpp` files are made to handle this) and you should make an issue.
+If you get this error in-editor, please double-check the file structure inside `res://Anaglyph` is the same as in `gdanaglyph-windows-v0.1.zip`'s `Anaglyph` folder. If you don't get this error in-editor, but your *exported* games get this error, I've messed up (the `anaglyph_export_plugin.h` and `anaglyph_export_plugin.cpp` files are made to handle this) and you should make an issue.
 
 Godot just crashes on start-up!
 -------------------------------
